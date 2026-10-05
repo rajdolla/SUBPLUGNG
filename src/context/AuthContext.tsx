@@ -15,6 +15,7 @@ type AuthContextValue = {
     phone: string;
     referralCode?: string;
   }) => Promise<{ needsEmailConfirmation: boolean }>;
+  resendVerificationEmail: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -87,6 +88,21 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
       if (error) throw new Error(error.message);
 
       return { needsEmailConfirmation: !data.session };
+    },
+    resendVerificationEmail: async (email) => {
+      if (!supabase) {
+        throw new Error('Authentication is not configured. Add the Supabase environment variables first.');
+      }
+
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email.trim().toLowerCase(),
+        options: {
+          emailRedirectTo: window.location.origin,
+        },
+      });
+
+      if (error) throw new Error(error.message);
     },
     signOut: async () => {
       if (!supabase) return;
