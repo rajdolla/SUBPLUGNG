@@ -105,7 +105,9 @@ const AppShell: React.FC = () => {
     setBlogModalOpen(true);
   };
 
-  if (window.location.pathname === '/dashboard' || window.location.pathname.startsWith('/dashboard/')) {
+  const isDashboardPath = window.location.pathname === '/dashboard' || window.location.pathname.startsWith('/dashboard/');
+
+  if (isDashboardPath && user) {
     return <DashboardPage onExit={() => handleNavigate('home')} />;
   }
 
