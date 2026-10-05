@@ -1,0 +1,6 @@
+{
+  "name": "SUBPLUG - Instant Data, Airtime & Bill Payments",
+  "description": "Instant data bundles, airtime top-up, electricity tokens, cable TV subscriptions, and wholesale VTU reseller APIs in Nigeria.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
