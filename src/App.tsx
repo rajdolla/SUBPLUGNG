@@ -28,7 +28,7 @@ import { isWhitelistedSection } from './utils/security';
 type PublicPage = 'home' | 'store' | 'blog' | 'vendor';
 
 const AppShell: React.FC = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [currentPage, setCurrentPage] = useState<PublicPage>(() => {
     const path = window.location.pathname.toLowerCase();
     const hash = window.location.hash.toLowerCase();
@@ -64,11 +64,11 @@ const AppShell: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (window.location.pathname === '/dashboard' && !user) {
+    if (!loading && window.location.pathname === '/dashboard' && !user) {
       setAuthTab('login');
       setAuthModalOpen(true);
     }
-  }, [user]);
+  }, [loading, user]);
 
   const handleNavigate = (page: PublicPage, hash?: string) => {
     setCurrentPage(page);
