@@ -466,7 +466,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-slate-500">Keep your login details private.</span>
-                      <button type="button" className="text-cyan-300 hover:text-cyan-200">Forgot password?</button>
+                      <span className="text-slate-600">Secure sign-in</span>
                     </div>
 
                     <button
