@@ -117,6 +117,11 @@ create trigger on_auth_user_updated
   after update of phone, phone_confirmed_at on auth.users
   for each row execute function public.handle_auth_user_update();
 
+-- Do not allow browser-side edits to identity fields. Auth updates happen through
+-- Supabase Auth and the trigger above; profile editing can be added later through
+-- a server-side endpoint with explicit field allow-listing.
+drop policy if exists "profiles_update_own" on public.profiles;
+
 -- Keep existing profile rows usable. New accounts are validated by the trigger.
 -- We intentionally do not make username/phone NOT NULL here because older
 -- accounts may predate this authentication policy and require a guided upgrade.
