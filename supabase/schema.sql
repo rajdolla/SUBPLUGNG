@@ -81,7 +81,13 @@ drop policy if exists "notifications_update_own" on public.notifications;
 create policy "notifications_update_own" on public.notifications
 for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
-create or replace function public.generate_subplug_referral_code()
+create schema if not exists private;
+
+drop function if exists private.generate_subplug_referral_code();
+drop function if exists public.handle_new_user();
+drop function if exists public.handle_auth_user_update();
+
+create or replace function private.generate_subplug_referral_code()
 returns text language plpgsql security definer set search_path = '' as $$
 declare
   candidate text;
@@ -94,11 +100,11 @@ begin
 end;
 $$;
 
-revoke all on function public.generate_subplug_referral_code() from public;
-revoke all on function public.generate_subplug_referral_code() from anon;
-revoke all on function public.generate_subplug_referral_code() from authenticated;
+revoke all on function private.generate_subplug_referral_code() from public;
+revoke all on function private.generate_subplug_referral_code() from anon;
+revoke all on function private.generate_subplug_referral_code() from authenticated;
 
-create or replace function public.handle_new_user()
+create or replace function private.handle_new_user()
 returns trigger language plpgsql security definer set search_path = '' as $$
 declare
   requested_username text;
@@ -124,7 +130,7 @@ begin
   )
   values (
     new.id, requested_name, requested_username, requested_phone,
-    referred_code, public.generate_subplug_referral_code()
+    referred_code, private.generate_subplug_referral_code()
   );
 
   insert into public.wallets (user_id)
@@ -138,9 +144,9 @@ $$;
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
 after insert on auth.users
-for each row execute function public.handle_new_user();
+for each row execute function private.handle_new_user();
 
-create or replace function public.handle_auth_user_update()
+create or replace function private.handle_auth_user_update()
 returns trigger language plpgsql security definer set search_path = '' as $$
 begin
   update public.profiles
@@ -155,7 +161,7 @@ $$;
 drop trigger if exists on_auth_user_updated on auth.users;
 create trigger on_auth_user_updated
 after update of phone, phone_confirmed_at on auth.users
-for each row execute function public.handle_auth_user_update();
+for each row execute function private.handle_auth_user_update();
 
 -- No browser insert/update/delete policies are intentionally created for wallets
 -- or transactions. Financial operations belong in trusted server code with
