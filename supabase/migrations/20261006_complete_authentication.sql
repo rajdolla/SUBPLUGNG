@@ -16,7 +16,13 @@ create unique index if not exists profiles_phone_unique_idx
   on public.profiles (phone)
   where phone is not null;
 
-create or replace function public.generate_subplug_referral_code()
+create schema if not exists private;
+
+drop function if exists private.generate_subplug_referral_code();
+drop function if exists public.handle_new_user();
+drop function if exists public.handle_auth_user_update();
+
+create or replace function private.generate_subplug_referral_code()
 returns text
 language plpgsql
 security definer
@@ -35,11 +41,11 @@ begin
 end;
 $$;
 
-revoke all on function public.generate_subplug_referral_code() from public;
-revoke all on function public.generate_subplug_referral_code() from anon;
-revoke all on function public.generate_subplug_referral_code() from authenticated;
+revoke all on function private.generate_subplug_referral_code() from public;
+revoke all on function private.generate_subplug_referral_code() from anon;
+revoke all on function private.generate_subplug_referral_code() from authenticated;
 
-create or replace function public.handle_new_user()
+create or replace function private.handle_new_user()
 returns trigger
 language plpgsql
 security definer
@@ -78,7 +84,7 @@ begin
     requested_username,
     requested_phone,
     referred_code,
-    public.generate_subplug_referral_code()
+    private.generate_subplug_referral_code()
   );
 
   insert into public.wallets (user_id)
@@ -92,9 +98,9 @@ $$;
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
-  for each row execute function public.handle_new_user();
+  for each row execute function private.handle_new_user();
 
-create or replace function public.handle_auth_user_update()
+create or replace function private.handle_auth_user_update()
 returns trigger
 language plpgsql
 security definer
@@ -115,7 +121,7 @@ $$;
 drop trigger if exists on_auth_user_updated on auth.users;
 create trigger on_auth_user_updated
   after update of phone, phone_confirmed_at on auth.users
-  for each row execute function public.handle_auth_user_update();
+  for each row execute function private.handle_auth_user_update();
 
 -- Do not allow browser-side edits to identity fields. Auth updates happen through
 -- Supabase Auth and the trigger above; profile editing can be added later through
