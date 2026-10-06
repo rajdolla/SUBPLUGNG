@@ -82,7 +82,7 @@ create policy "notifications_update_own" on public.notifications
 for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 create or replace function public.generate_subplug_referral_code()
-returns text language plpgsql security definer set search_path = public as $$
+returns text language plpgsql security definer set search_path = '' as $$
 declare
   candidate text;
 begin
@@ -99,7 +99,7 @@ revoke all on function public.generate_subplug_referral_code() from anon;
 revoke all on function public.generate_subplug_referral_code() from authenticated;
 
 create or replace function public.handle_new_user()
-returns trigger language plpgsql security definer set search_path = public as $$
+returns trigger language plpgsql security definer set search_path = '' as $$
 declare
   requested_username text;
   requested_phone text;
@@ -141,7 +141,7 @@ after insert on auth.users
 for each row execute function public.handle_new_user();
 
 create or replace function public.handle_auth_user_update()
-returns trigger language plpgsql security definer set search_path = public as $$
+returns trigger language plpgsql security definer set search_path = '' as $$
 begin
   update public.profiles
   set phone = coalesce(new.phone, phone),
