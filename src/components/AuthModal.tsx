@@ -19,6 +19,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, initialTab = 'regi
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [referralCode, setReferralCode] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -66,6 +67,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, initialTab = 'regi
 
     if (password.length < 8) {
       setErrorMessage('Password must be at least 8 characters.');
+      return;
+    }
+
+    if (tab === 'register' && password !== confirmPassword) {
+      setErrorMessage('Passwords do not match. Please confirm your password.');
       return;
     }
 
@@ -207,7 +213,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, initialTab = 'regi
               {tab === 'register' && <div><label className="block text-xs font-semibold text-slate-300 mb-1">Nigerian Phone Number</label><div className="relative"><Phone className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" /><input type="tel" required maxLength={14} value={phone} onChange={(e) => setPhone(e.target.value.replace(/[^0-9+]/g, '').slice(0, 14))} placeholder="08012345678" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white font-mono" /></div></div>}
               <div><label className="block text-xs font-semibold text-slate-300 mb-1">Email Address</label><div className="relative"><Mail className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" /><input type="email" required maxLength={100} value={email} onChange={(e) => setEmail(cleanRawInput(e.target.value, 100))} placeholder="name@example.com" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white" /></div></div>
               <div><label className="block text-xs font-semibold text-slate-300 mb-1">Password</label><div className="relative"><Lock className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" /><input type="password" required minLength={8} maxLength={72} value={password} onChange={(e) => setPassword(e.target.value.slice(0, 72))} placeholder="At least 8 characters" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white" /></div></div>
+              {tab === 'register' && <div><label className="block text-xs font-semibold text-slate-300 mb-1">Confirm Password</label><div className="relative"><Lock className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" /><input type="password" required minLength={8} maxLength={72} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value.slice(0, 72))} placeholder="Re-enter your password" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white" /></div></div>}
               {tab === 'register' && <div><label className="block text-xs font-semibold text-slate-300 mb-1">Referral Code <span className="text-slate-500 font-normal">(Optional)</span></label><input maxLength={10} value={referralCode} onChange={(e) => setReferralCode(sanitizeReferralCode(e.target.value))} placeholder="SUB992" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white uppercase font-mono" /></div>}
+              {tab === 'register' && <p className="text-xs text-slate-500 leading-5 text-center">By creating an account, you agree to our <span className="text-cyan-300">Terms of Service</span> and <span className="text-cyan-300">Privacy Policy</span>.</p>}
               <button type="submit" disabled={isSubmitting} className="w-full py-3 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-60 text-slate-950 font-bold text-sm rounded-xl flex items-center justify-center gap-2">
                 {isSubmitting ? <><span className="h-4 w-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />Authenticating…</> : <>{tab === 'login' ? 'Login securely' : 'Create secure account'}<ArrowRight className="h-4 w-4" /></>}
               </button>
