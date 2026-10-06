@@ -20,7 +20,7 @@ create or replace function public.generate_subplug_referral_code()
 returns text
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $$
 declare
   candidate text;
@@ -43,7 +43,7 @@ create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $$
 declare
   requested_username text;
@@ -98,7 +98,7 @@ create or replace function public.handle_auth_user_update()
 returns trigger
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $$
 begin
   update public.profiles
