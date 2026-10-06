@@ -138,10 +138,7 @@ const AppShell: React.FC = () => {
       <Footer onOpenLegal={(type) => { setLegalType(type); setLegalModalOpen(true); }} onOpenAuth={openAuth} onOpenVendor={() => setVendorModalOpen(true)} onNavigate={handleNavigate} />
       <MobileBottomNav currentPage={currentPage} onNavigate={handleNavigate} onOpenAuth={openAuth} />
       <AuthModal isOpen={authModalOpen} initialTab={authTab} onClose={() => setAuthModalOpen(false)} onAuthenticated={goToDashboard} />
-      <PhoneVerificationModal isOpen={needsPhoneVerification} onClose={() => {
-        if (!user?.phone_confirmed_at) return;
-        if (window.location.pathname !== '/dashboard') return;
-      }} />
+      <PhoneVerificationModal isOpen={needsPhoneVerification} />
       <VendorModal isOpen={vendorModalOpen} onClose={() => setVendorModalOpen(false)} />
       <StoreModal isOpen={storeModalOpen} selectedProduct={selectedProduct} onClose={() => setStoreModalOpen(false)} />
       <BlogModal isOpen={blogModalOpen} post={activeBlogPost} onClose={() => setBlogModalOpen(false)} />
