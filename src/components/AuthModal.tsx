@@ -1,8 +1,16 @@
 import React, { useState } from 'react';
-import { X, Lock, Mail, Phone, User, ArrowRight, ShieldCheck, CheckCircle2, AlertCircle, RefreshCw, ArrowLeft } from 'lucide-react';
+import { X, Lock, Mail, Phone, User, AtSign, ArrowRight, ShieldCheck, CheckCircle2, AlertCircle, RefreshCw, ArrowLeft } from 'lucide-react';
 import { SubplugLogo } from './SubplugLogo';
 import { useAuth } from '../context/AuthContext';
-import { cleanRawInput, isValidEmail, isValidNigerianPhone, sanitizeReferralCode } from '../utils/security';
+import {
+  cleanRawInput,
+  isReservedUsername,
+  isValidEmail,
+  isValidNigerianPhone,
+  isValidUsername,
+  normalizeUsername,
+  sanitizeReferralCode,
+} from '../utils/security';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -16,9 +24,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, initialTab = 'regi
   const [tab, setTab] = useState<'login' | 'register'>(initialTab);
   const [verificationPending, setVerificationPending] = useState(false);
   const [fullName, setFullName] = useState('');
+  const [username, setUsername] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
+  const [loginIdentifier, setLoginIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [referralCode, setReferralCode] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -42,24 +53,46 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, initialTab = 'regi
     setSuccessMessage('');
 
     if (!configured) {
-      setErrorMessage('Secure authentication is not configured yet. Please add the Supabase environment variables before using the dashboard.');
+      setErrorMessage('Secure authentication is not configured yet. Please add the Supabase environment variables first.');
       return;
     }
 
-    const trimmedEmail = email.trim().toLowerCase();
-    if (!isValidEmail(trimmedEmail)) {
-      setErrorMessage('Please enter a valid email address.');
-      return;
-    }
-
-    if (tab === 'register') {
+    if (tab === 'login') {
+      if (!loginIdentifier.trim()) {
+        setErrorMessage('Enter your email, username or phone number.');
+        return;
+      }
+    } else {
+      const trimmedEmail = email.trim().toLowerCase();
       const cleanName = cleanRawInput(fullName, 60).trim();
+      const normalizedUsername = normalizeUsername(username);
+
+      if (!isValidEmail(trimmedEmail)) {
+        setErrorMessage('Please enter a valid email address.');
+        return;
+      }
       if (cleanName.length < 3) {
         setErrorMessage('Please enter your full name.');
         return;
       }
+      if (!isValidUsername(normalizedUsername)) {
+        setErrorMessage('Username must be 4–20 characters using only letters, numbers or underscores.');
+        return;
+      }
+      if (isReservedUsername(normalizedUsername)) {
+        setErrorMessage('That username is reserved. Please choose another.');
+        return;
+      }
       if (!isValidNigerianPhone(phone)) {
         setErrorMessage('Please enter a valid Nigerian phone number.');
+        return;
+      }
+      if (password.length < 8) {
+        setErrorMessage('Password must be at least 8 characters.');
+        return;
+      }
+      if (password !== confirmPassword) {
+        setErrorMessage('Passwords do not match.');
         return;
       }
     }
@@ -72,11 +105,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, initialTab = 'regi
     setIsSubmitting(true);
     try {
       if (tab === 'login') {
-        await signIn(trimmedEmail, password);
+        await signIn(loginIdentifier, password);
         onAuthenticated?.();
       } else {
         const result = await signUp({
-          email: trimmedEmail,
+          email: email.trim().toLowerCase(),
+          username: normalizeUsername(username),
           password,
           fullName: cleanRawInput(fullName, 60).trim(),
           phone,
@@ -140,40 +174,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, initialTab = 'regi
               <div className="flex gap-3">
                 <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-400 mt-0.5" />
                 <p className="text-sm text-slate-300 leading-6">
-                  Click the link in the email to verify your SUBPLUG account. If you don't see it, check your spam or promotions folder.
+                  Click the link in the email to verify your SUBPLUG account. After email verification, we will also verify your phone with a one-time SMS code.
                 </p>
               </div>
             </div>
 
-            {errorMessage && (
-              <div className="mt-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex gap-2 text-left">
-                <AlertCircle className="h-4 w-4 shrink-0" />
-                <span>{errorMessage}</span>
-              </div>
-            )}
+            {errorMessage && <div className="mt-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex gap-2 text-left"><AlertCircle className="h-4 w-4 shrink-0" /><span>{errorMessage}</span></div>}
+            {successMessage && <div className="mt-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex gap-2 text-left"><CheckCircle2 className="h-4 w-4 shrink-0" /><span>{successMessage}</span></div>}
 
-            {successMessage && (
-              <div className="mt-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex gap-2 text-left">
-                <CheckCircle2 className="h-4 w-4 shrink-0" />
-                <span>{successMessage}</span>
-              </div>
-            )}
-
-            <button
-              type="button"
-              onClick={handleResend}
-              disabled={isResending}
-              className="mt-5 w-full py-3 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-60 text-slate-950 font-bold text-sm rounded-xl flex items-center justify-center gap-2"
-            >
-              <RefreshCw className={`h-4 w-4 ${isResending ? 'animate-spin' : ''}`} />
+            <button type="button" onClick={handleResend} disabled={isResending} className="mt-5 w-full py-3 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-60 text-slate-950 font-bold text-sm rounded-xl flex items-center justify-center gap-2">
+              <RefreshCw className={isResending ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
               {isResending ? 'Sending verification email…' : 'Resend verification email'}
             </button>
 
-            <button
-              type="button"
-              onClick={handleChangeEmail}
-              className="mt-4 inline-flex items-center gap-2 text-sm text-cyan-300 hover:text-cyan-200"
-            >
+            <button type="button" onClick={handleChangeEmail} className="mt-4 inline-flex items-center gap-2 text-sm text-cyan-300 hover:text-cyan-200">
               <ArrowLeft className="h-4 w-4" />
               Use a different email
             </button>
@@ -188,12 +202,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, initialTab = 'regi
             <div className="text-center mb-6">
               <div className="flex justify-center mb-3"><SubplugLogo variant="icon" size="lg" /></div>
               <h3 className="text-2xl font-bold text-white">{tab === 'login' ? 'Login to SUBPLUG' : 'Create your SUBPLUG account'}</h3>
-              <p className="text-xs sm:text-sm text-slate-400 mt-1">{tab === 'login' ? 'Access your secure customer dashboard.' : 'Create an account before accessing wallet and VTU services.'}</p>
+              <p className="text-xs sm:text-sm text-slate-400 mt-1">{tab === 'login' ? 'Use your email, username or phone number.' : 'Secure your account with email and phone verification.'}</p>
             </div>
 
             <div className="grid grid-cols-2 p-1 bg-slate-950 rounded-xl mb-4 border border-slate-800">
               {(['login', 'register'] as const).map((item) => (
-                <button key={item} type="button" onClick={() => { setTab(item); setErrorMessage(''); setSuccessMessage(''); }} className={`py-2 text-xs font-bold rounded-lg ${tab === item ? (item === 'login' ? 'bg-slate-800 text-white' : 'bg-emerald-500 text-slate-950') : 'text-slate-400'}`}>
+                <button key={item} type="button" onClick={() => { setTab(item); setErrorMessage(''); setSuccessMessage(''); }} className={'py-2 text-xs font-bold rounded-lg ' + (tab === item ? (item === 'login' ? 'bg-slate-800 text-white' : 'bg-emerald-500 text-slate-950') : 'text-slate-400')}>
                   {item === 'login' ? 'Login' : 'Register'}
                 </button>
               ))}
@@ -203,17 +217,61 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, initialTab = 'regi
             {successMessage && <div className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex gap-2"><CheckCircle2 className="h-4 w-4 shrink-0" /><span>{successMessage}</span></div>}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {tab === 'register' && <div><label className="block text-xs font-semibold text-slate-300 mb-1">Full Name</label><div className="relative"><User className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" /><input required maxLength={60} value={fullName} onChange={(e) => setFullName(cleanRawInput(e.target.value, 60))} placeholder="Your full name" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white" /></div></div>}
-              {tab === 'register' && <div><label className="block text-xs font-semibold text-slate-300 mb-1">Nigerian Phone Number</label><div className="relative"><Phone className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" /><input type="tel" required maxLength={14} value={phone} onChange={(e) => setPhone(e.target.value.replace(/[^0-9+]/g, '').slice(0, 14))} placeholder="08012345678" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white font-mono" /></div></div>}
-              <div><label className="block text-xs font-semibold text-slate-300 mb-1">Email Address</label><div className="relative"><Mail className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" /><input type="email" required maxLength={100} value={email} onChange={(e) => setEmail(cleanRawInput(e.target.value, 100))} placeholder="name@example.com" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white" /></div></div>
-              <div><label className="block text-xs font-semibold text-slate-300 mb-1">Password</label><div className="relative"><Lock className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" /><input type="password" required minLength={8} maxLength={72} value={password} onChange={(e) => setPassword(e.target.value.slice(0, 72))} placeholder="At least 8 characters" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white" /></div></div>
-              {tab === 'register' && <div><label className="block text-xs font-semibold text-slate-300 mb-1">Referral Code <span className="text-slate-500 font-normal">(Optional)</span></label><input maxLength={10} value={referralCode} onChange={(e) => setReferralCode(sanitizeReferralCode(e.target.value))} placeholder="SUB992" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white uppercase font-mono" /></div>}
+              {tab === 'login' ? (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">Email, Username or Phone Number</label>
+                  <div className="relative">
+                    <AtSign className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
+                    <input required maxLength={100} value={loginIdentifier} onChange={(e) => setLoginIdentifier(cleanRawInput(e.target.value, 100))} placeholder="you@example.com / username / 08012345678" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white" />
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">Full Name</label>
+                    <div className="relative"><User className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" /><input required maxLength={60} value={fullName} onChange={(e) => setFullName(cleanRawInput(e.target.value, 60))} placeholder="Your full name" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white" /></div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">Username</label>
+                    <div className="relative"><AtSign className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" /><input required minLength={4} maxLength={20} value={username} onChange={(e) => setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, '').slice(0, 20).toLowerCase())} placeholder="e.g. user_01" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white" /></div>
+                    <p className="mt-1 text-[11px] text-slate-500">4–20 characters · letters, numbers and underscore.</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">Nigerian Phone Number</label>
+                    <div className="relative"><Phone className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" /><input type="tel" required maxLength={14} value={phone} onChange={(e) => setPhone(e.target.value.replace(/[^0-9+]/g, '').slice(0, 14))} placeholder="08012345678" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white font-mono" /></div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">Email Address</label>
+                    <div className="relative"><Mail className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" /><input type="email" required maxLength={100} value={email} onChange={(e) => setEmail(cleanRawInput(e.target.value, 100))} placeholder="name@example.com" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white" /></div>
+                  </div>
+                </>
+              )}
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">Password</label>
+                <div className="relative"><Lock className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" /><input type="password" required minLength={8} maxLength={72} value={password} onChange={(e) => setPassword(e.target.value.slice(0, 72))} placeholder="At least 8 characters" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white" /></div>
+              </div>
+
+              {tab === 'register' && (
+                <>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">Confirm Password</label>
+                    <div className="relative"><Lock className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" /><input type="password" required minLength={8} maxLength={72} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value.slice(0, 72))} placeholder="Re-enter your password" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white" /></div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">Referral Code <span className="text-slate-500 font-normal">(Optional)</span></label>
+                    <input maxLength={10} value={referralCode} onChange={(e) => setReferralCode(sanitizeReferralCode(e.target.value))} placeholder="SUB992" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white uppercase font-mono" />
+                  </div>
+                  <p className="text-[11px] text-slate-500 leading-5">By creating an account, you agree to our Terms of Service and Privacy Policy.</p>
+                </>
+              )}
+
               <button type="submit" disabled={isSubmitting} className="w-full py-3 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-60 text-slate-950 font-bold text-sm rounded-xl flex items-center justify-center gap-2">
                 {isSubmitting ? <><span className="h-4 w-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />Authenticating…</> : <>{tab === 'login' ? 'Login securely' : 'Create secure account'}<ArrowRight className="h-4 w-4" /></>}
               </button>
             </form>
 
-            <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-center gap-1.5 text-xs text-slate-500"><ShieldCheck className="h-4 w-4 text-emerald-400" /><span>Auth provider manages password hashing and sessions</span></div>
+            <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-center gap-1.5 text-xs text-slate-500"><ShieldCheck className="h-4 w-4 text-emerald-400" /><span>Supabase manages password hashing and JWT sessions</span></div>
           </>
         )}
       </div>
