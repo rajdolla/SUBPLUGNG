@@ -23,6 +23,7 @@ import { BlogModal } from './components/BlogModal';
 import { PriceListModal } from './components/PriceListModal';
 import { LegalModal } from './components/LegalModal';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { supabase } from './lib/supabase';
 import { DataPlan, ServiceItem, StoreProduct, BlogPost } from './types';
 import { isWhitelistedSection } from './utils/security';
 
@@ -49,6 +50,7 @@ const AppShell: React.FC = () => {
   const [priceListModalOpen, setPriceListModalOpen] = useState(false);
   const [legalModalOpen, setLegalModalOpen] = useState(false);
   const [legalType, setLegalType] = useState<'terms' | 'privacy'>('terms');
+  const [profilePhone, setProfilePhone] = useState<string | null | undefined>(undefined);
 
   useEffect(() => {
     const onPopState = () => {
@@ -63,6 +65,35 @@ const AppShell: React.FC = () => {
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
+
+  useEffect(() => {
+    if (!user || !supabase) {
+      setProfilePhone(null);
+      return;
+    }
+
+    let mounted = true;
+    setProfilePhone(undefined);
+
+    supabase
+      .from('profiles')
+      .select('phone')
+      .eq('id', user.id)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (!mounted) return;
+        if (error) {
+          console.error('Unable to load authentication profile:', error.message);
+          setProfilePhone(undefined);
+          return;
+        }
+        setProfilePhone(data?.phone ?? null);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [user?.id]);
 
   useEffect(() => {
     if (!loading && window.location.pathname === '/dashboard' && !user) {
@@ -107,11 +138,26 @@ const AppShell: React.FC = () => {
   };
 
   const isDashboardPath = window.location.pathname === '/dashboard' || window.location.pathname.startsWith('/dashboard/');
-  const hasRegisteredPhone = Boolean(user?.user_metadata?.username && user?.user_metadata?.phone);
-  const needsPhoneVerification = Boolean(user && hasRegisteredPhone && !user.phone_confirmed_at);
+  const profileCheckLoading = Boolean(user && profilePhone === undefined);
+  const needsPhoneVerification = Boolean(user && profilePhone && !user.phone_confirmed_at);
 
-  if (isDashboardPath && user && !needsPhoneVerification) {
+  if (isDashboardPath && user && !profileCheckLoading && !needsPhoneVerification) {
     return <DashboardPage onExit={() => handleNavigate('home')} />;
+  }
+
+  if (isDashboardPath && user && (profileCheckLoading || needsPhoneVerification)) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-6">
+        {needsPhoneVerification ? (
+          <PhoneVerificationModal isOpen />
+        ) : (
+          <div className="text-center">
+            <div className="mx-auto h-8 w-8 rounded-full border-2 border-emerald-400 border-t-transparent animate-spin" />
+            <p className="mt-3 text-sm text-slate-400">Securing your account…</p>
+          </div>
+        )}
+      </div>
+    );
   }
 
   return (
