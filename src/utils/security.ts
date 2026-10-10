@@ -12,6 +12,7 @@
 export const VALID_SECTIONS = [
   'home',
   'services',
+  'partners',
   'pricing',
   'vendor',
   'store-teaser',
@@ -145,4 +146,67 @@ export function sanitizeReferralCode(code: string): string {
 export function clampInteger(val: number, min = 1, max = 50): number {
   if (isNaN(val) || !isFinite(val)) return min;
   return Math.max(min, Math.min(max, Math.floor(val)));
+}
+
+export interface ParsedPhoneResults {
+  valid: string[];
+  invalid: string[];
+  duplicates: string[];
+}
+
+/**
+ * Parses and validates raw bulk phone numbers from text or CSV inputs.
+ * Supports Nigerian formats: 080..., +234..., 234...
+ * Detects valid, invalid, and duplicate phone numbers without sending SMS.
+ */
+export function parseBulkPhoneNumbers(raw: string): ParsedPhoneResults {
+  if (!raw || typeof raw !== 'string') {
+    return { valid: [], invalid: [], duplicates: [] };
+  }
+
+  // Split by newlines, commas, semicolons, tabs, or spaces
+  const tokens = raw
+    .split(/[\r\n,;\t ]+/)
+    .map((t) => t.trim())
+    .filter(Boolean);
+
+  const seen = new Set<string>();
+  const valid: string[] = [];
+  const invalid: string[] = [];
+  const duplicates: string[] = [];
+
+  for (const token of tokens) {
+    if (isValidNigerianPhone(token)) {
+      const normalized = normalizeNigerianPhone(token);
+      if (seen.has(normalized)) {
+        duplicates.push(token);
+      } else {
+        seen.add(normalized);
+        valid.push(normalized);
+      }
+    } else {
+      invalid.push(token);
+    }
+  }
+
+  return { valid, invalid, duplicates };
+}
+
+/**
+ * Calculates standard GSM SMS segments based on character count.
+ * 160 characters for 1 segment; 153 characters per segment for multi-page messages.
+ */
+export function calculateSmsSegments(message: string): number {
+  if (!message || message.length === 0) return 0;
+  const len = message.length;
+  if (len <= 160) return 1;
+  return Math.ceil(len / 153);
+}
+
+/**
+ * Calculates estimated SMS cost (explicitly described as estimate in the UI).
+ */
+export function estimateSmsCost(recipientCount: number, segments: number, ratePerSegment = 3.5): number {
+  if (recipientCount <= 0 || segments <= 0) return 0;
+  return recipientCount * segments * ratePerSegment;
 }

@@ -77,11 +77,11 @@ export const StoreModal: React.FC<StoreModalProps> = ({
             </div>
 
             <h3 className="text-2xl font-bold text-white">
-              Order Received Successfully!
+              Order Request Logged (Demo)
             </h3>
 
             <p className="text-sm text-slate-300">
-              Your order for <strong className="text-white">{quantity}x {activeProduct.title}</strong> has been logged.
+              Demo intake for <strong className="text-white">{quantity}x {activeProduct.title}</strong> has been logged. Live payment processing and logistics dispatch will connect upon backend integration.
             </p>
 
             <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-left space-y-2 text-xs">

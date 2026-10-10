@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Menu, X, ArrowRight, ShieldCheck, ChevronRight } from 'lucide-react';
+import { Menu, X, ArrowRight, ShieldCheck, ChevronRight, Sparkles } from 'lucide-react';
 import { SubplugLogo } from './SubplugLogo';
+import { useCms } from '../context/CmsContext';
 
 interface NavbarProps {
   currentPage: 'home' | 'store' | 'blog' | 'vendor';
@@ -13,23 +14,34 @@ export const Navbar: React.FC<NavbarProps> = ({
   currentPage,
   onNavigate,
   onOpenAuth,
-  onOpenVendorModal,
+  onOpenVendorModal: _onOpenVendorModal,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { cms } = useCms();
+  const { siteSettings, navigation } = cms;
 
   const navLinks = [
     { label: 'Home', action: () => onNavigate('home'), isActive: currentPage === 'home' },
     { label: 'Services', action: () => onNavigate('home', 'services') },
+    { label: 'Partners', action: () => onNavigate('home', 'partners') },
     { label: 'Pricing', action: () => onNavigate('home', 'pricing') },
-    { label: 'Vendor', action: () => onNavigate('vendor'), isActive: currentPage === 'vendor' },
+    { label: 'Rewards', action: () => onNavigate('home', 'rewards') },
+    { label: 'Vendor & API', action: () => onNavigate('vendor'), isActive: currentPage === 'vendor' },
     { label: 'Store', action: () => onNavigate('store'), isActive: currentPage === 'store' },
-    { label: 'Download App', action: () => onNavigate('home', 'app-download') },
     { label: 'Blog', action: () => onNavigate('blog'), isActive: currentPage === 'blog' },
     { label: 'FAQ', action: () => onNavigate('home', 'faq') },
   ];
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-md">
+      {/* Top Announcement Bar from CMS */}
+      {siteSettings.isAnnouncementActive && siteSettings.announcementBarText && (
+        <div className="bg-gradient-to-r from-emerald-600 via-cyan-600 to-emerald-600 text-white text-[11px] font-medium py-1 px-4 text-center flex items-center justify-center gap-2 shadow-inner">
+          <Sparkles className="h-3 w-3 shrink-0 animate-pulse" />
+          <span className="truncate">{siteSettings.announcementBarText}</span>
+        </div>
+      )}
+
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Zone 1: Brand Wordmark with Official Subplug Logo Icon */}
         <button
@@ -41,7 +53,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         </button>
 
         {/* Zone 2: Navigation Links (Desktop) */}
-        <nav className="hidden lg:flex items-center gap-6 xl:gap-8 text-sm font-medium">
+        <nav className="hidden lg:flex items-center gap-5 xl:gap-7 text-sm font-medium">
           {navLinks.map((link) => (
             <button
               key={link.label}
@@ -63,13 +75,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={() => onOpenAuth('login')}
             className="px-4 py-2 text-sm font-medium text-slate-200 border border-slate-700/80 hover:border-slate-500 rounded-lg hover:bg-slate-900 transition-colors whitespace-nowrap min-h-[40px] cursor-pointer"
           >
-            Login
+            {navigation.secondaryCtaLabel || 'Login'}
           </button>
           <button
             onClick={() => onOpenAuth('register')}
             className="px-4 py-2 text-sm font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg shadow-sm shadow-emerald-500/20 active:scale-[0.98] transition-all whitespace-nowrap min-h-[40px] flex items-center gap-1.5 cursor-pointer"
           >
-            Register
+            {navigation.primaryCtaLabel || 'Register'}
             <ArrowRight className="h-4 w-4" />
           </button>
         </div>
@@ -80,7 +92,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={() => onOpenAuth('login')}
             className="px-3 py-1.5 text-xs font-semibold text-slate-200 border border-slate-700 rounded-lg hover:bg-slate-900 cursor-pointer"
           >
-            Login
+            {navigation.secondaryCtaLabel || 'Login'}
           </button>
           <button
             type="button"
@@ -124,7 +136,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }}
               className="w-full py-3 text-sm font-semibold text-slate-200 border border-slate-700 rounded-xl hover:bg-slate-900 transition-colors min-h-[48px] cursor-pointer"
             >
-              Login
+              {navigation.secondaryCtaLabel || 'Login'}
             </button>
             <button
               onClick={() => {
@@ -133,7 +145,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }}
               className="w-full py-3 text-sm font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-xl transition-colors min-h-[48px] shadow-sm shadow-emerald-500/20 cursor-pointer"
             >
-              Create Account
+              {navigation.primaryCtaLabel || 'Create Account'}
             </button>
           </div>
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Mail, Phone, MapPin, ShieldCheck } from 'lucide-react';
 import { SubplugLogo } from './SubplugLogo';
+import { useCms } from '../context/CmsContext';
 
 interface FooterProps {
   onOpenLegal: (type: 'terms' | 'privacy') => void;
@@ -10,11 +11,16 @@ interface FooterProps {
 }
 
 export const Footer: React.FC<FooterProps> = ({ onOpenLegal, onOpenAuth, onOpenVendor, onNavigate }) => {
+  const { cms } = useCms();
+  const footer = cms.footer;
+
   const handleNav = (page: 'home' | 'store' | 'blog' | 'vendor', hash?: string) => {
     if (onNavigate) {
       onNavigate(page, hash);
     }
   };
+
+  if (footer && !footer.isVisible) return null;
 
   return (
     <footer className="bg-slate-950 border-t border-slate-800 text-slate-400 text-sm">
@@ -33,7 +39,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenLegal, onOpenAuth, onOpenV
             </button>
             
             <p className="text-xs sm:text-sm text-slate-400 max-w-sm leading-relaxed">
-              Nigeria’s fastest automated VTU platform for cheap SME data bundles, airtime top-up, prepaid electricity tokens, cable TV decoders, and wholesale reseller APIs.
+              {footer?.companyDescription || 'Nigeria’s fastest automated VTU platform for cheap SME data bundles, airtime top-up, prepaid electricity tokens, cable TV decoders, and wholesale reseller APIs.'}
             </p>
 
             {/* Social Media Icons - Clearly Visible with Branded Accents */}
@@ -154,15 +160,15 @@ export const Footer: React.FC<FooterProps> = ({ onOpenLegal, onOpenAuth, onOpenV
             <div className="space-y-2.5 text-xs text-slate-400">
               <div className="flex items-start gap-2.5">
                 <MapPin className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-                <span>Suite 14B, Obafemi Awolowo Way, Ikeja, Lagos State, Nigeria</span>
+                <span>{footer?.officeAddress || '14 Admiralty Way, Lekki Phase 1, Lagos State, Nigeria'}</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <Phone className="h-4 w-4 text-emerald-400 shrink-0" />
-                <span>+234 810 123 4567</span>
+                <span>{footer?.supportPhone || '+234 810 123 4567'}</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <Mail className="h-4 w-4 text-emerald-400 shrink-0" />
-                <span>support@subplug.ng</span>
+                <span>{footer?.supportEmail || 'support@subplug.ng'}</span>
               </div>
             </div>
           </div>
@@ -173,7 +179,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenLegal, onOpenAuth, onOpenV
         <div className="mt-12 pt-8 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-4 w-4 text-emerald-500" />
-            <span>© 2026 SUBPLUG Technologies Nigeria Ltd. All rights reserved.</span>
+            <span>{footer?.copyrightText || '© 2026 SUBPLUG Technologies Nigeria Ltd. All rights reserved.'}</span>
           </div>
 
           <div className="flex items-center gap-6">

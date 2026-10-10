@@ -82,13 +82,13 @@ export const VendorModal: React.FC<VendorModalProps> = ({ isOpen, onClose }) => 
 
             <div className="space-y-1">
               <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">
-                Upgrade Confirmed
+                Intake Confirmed (Demo Simulation)
               </span>
               <h3 className="text-2xl font-black text-white">
-                Vendor License Activated!
+                Vendor Upgrade Requested
               </h3>
               <p className="text-xs sm:text-sm text-slate-300">
-                Congratulations <strong className="text-white">{cleanRawInput(businessName, 50) || 'Partner'}</strong>! Your account has been upgraded to the <span className="text-amber-400 font-bold">{selectedTier === 'reseller' ? 'Reseller Agent Tier' : 'API Developer Partner Tier'}</span>.
+                Demo simulation for <strong className="text-white">{cleanRawInput(businessName, 50) || 'Partner'}</strong>. Your application for <span className="text-amber-400 font-bold">{selectedTier === 'reseller' ? 'Reseller Agent Tier' : 'API Developer Partner Tier'}</span> is recorded. Live payment processing will activate once backend integration is complete.
               </p>
             </div>
 
@@ -293,7 +293,7 @@ export const VendorModal: React.FC<VendorModalProps> = ({ isOpen, onClose }) => 
                     }`}
                   >
                     <CreditCard className="h-3.5 w-3.5 text-amber-400" />
-                    <span>Moniepoint / Card</span>
+                    <span>Debit Card / Gateway</span>
                   </button>
                 </div>
               </div>

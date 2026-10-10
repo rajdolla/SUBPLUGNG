@@ -1,126 +1,59 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import React, { useMemo, useState } from 'react';
 import {
   Activity,
-  ArrowDownToLine,
-  ArrowLeftRight,
   ArrowUpRight,
   Bell,
-  BookOpen,
-  Cable,
   CheckCircle2,
-  ChevronRight,
-  CircleDollarSign,
   Code2,
-  CreditCard,
+  Copy,
+  ExternalLink,
   FileText,
-  GraduationCap,
-  Headphones,
-  LayoutDashboard,
-  LogOut,
-  Menu,
+  KeyRound,
+  Lock,
   MessageCircle,
   Package,
-  Phone,
   ReceiptText,
-  RefreshCw,
-  Settings,
   ShieldCheck,
   ShoppingBag,
-  Smartphone,
-  Store,
+  TrendingUp,
   UserRound,
   Users,
   Wallet,
-  Wifi,
+  Clock,
   X,
-  Zap,
+  Check,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-
-type DashboardSection =
-  | 'overview'
-  | 'data'
-  | 'airtime'
-  | 'electricity'
-  | 'cable'
-  | 'airtime-cash'
-  | 'exam-pins'
-  | 'recharge'
-  | 'reseller'
-  | 'api'
-  | 'store'
-  | 'transactions'
-  | 'notifications'
-  | 'profile'
-  | 'security';
+import { DashboardSection, KycStatus, KycLevel } from '../types';
+import { DashboardSidebar } from '../components/dashboard/DashboardSidebar';
+import { DashboardTopBar } from '../components/dashboard/DashboardTopBar';
+import { DashboardMobileNav } from '../components/dashboard/DashboardMobileNav';
+import { OverviewWorkspace } from '../components/dashboard/OverviewWorkspace';
+import { WalletWorkspace } from '../components/dashboard/WalletWorkspace';
+import { BonusWalletWorkspace } from '../components/dashboard/BonusWalletWorkspace';
+import { CashbackWorkspace } from '../components/dashboard/CashbackWorkspace';
+import { ReferralWorkspace } from '../components/dashboard/ReferralWorkspace';
+import { BulkSmsWorkspace } from '../components/dashboard/BulkSmsWorkspace';
+import { KycWorkspace } from '../components/dashboard/KycWorkspace';
+import { TransactionPinWorkspace } from '../components/dashboard/TransactionPinWorkspace';
+import { AirtimeCashWorkspace } from '../components/dashboard/AirtimeCashWorkspace';
+import { ServiceWorkspace } from '../components/dashboard/ServiceWorkspace';
+import { FundWalletModal } from '../components/dashboard/FundWalletModal';
+import { AdminPartnersWorkspace } from '../components/dashboard/AdminPartnersWorkspace';
+import { RewardsWorkspace } from '../components/dashboard/RewardsWorkspace';
+import { ResolutionWorkspace } from '../components/dashboard/ResolutionWorkspace';
+import { AdminCmsWorkspace } from '../components/dashboard/AdminCmsWorkspace';
+import { AdminRewardsWorkspace } from '../components/dashboard/AdminRewardsWorkspace';
+import { AdminResolutionWorkspace } from '../components/dashboard/AdminResolutionWorkspace';
+import { STORE_PRODUCTS } from '../data/mockData';
 
 type DashboardPageProps = {
   onExit: () => void;
-};
-
-const money = (value: number) => `₦${value.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
-
-const menuGroups = [
-  {
-    title: 'Workspace',
-    items: [
-      { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-      { id: 'transactions', label: 'Transactions', icon: Activity },
-      { id: 'notifications', label: 'Notifications', icon: Bell },
-    ],
-  },
-  {
-    title: 'Buy & Pay',
-    items: [
-      { id: 'data', label: 'Buy Data', icon: Wifi },
-      { id: 'airtime', label: 'Buy Airtime', icon: Smartphone },
-      { id: 'electricity', label: 'Electricity', icon: Zap },
-      { id: 'cable', label: 'Cable TV', icon: Cable },
-      { id: 'airtime-cash', label: 'Airtime to Cash', icon: ArrowLeftRight },
-      { id: 'exam-pins', label: 'Exam Pins', icon: GraduationCap },
-      { id: 'recharge', label: 'Recharge Printing', icon: ReceiptText },
-    ],
-  },
-  {
-    title: 'Grow',
-    items: [
-      { id: 'reseller', label: 'Reseller Centre', icon: Users },
-      { id: 'api', label: 'Developer API', icon: Code2 },
-      { id: 'store', label: 'SUBPLUG Store', icon: ShoppingBag },
-    ],
-  },
-  {
-    title: 'Account',
-    items: [
-      { id: 'profile', label: 'Profile', icon: UserRound },
-      { id: 'security', label: 'Security', icon: ShieldCheck },
-    ],
-  },
-] as const;
-
-const transactions = [
-  { type: 'Data', description: 'MTN 5GB SME', amount: -1300, status: 'Successful', date: 'Today, 10:42 AM' },
-  { type: 'Wallet', description: 'Wallet funding', amount: 10000, status: 'Successful', date: 'Yesterday, 4:18 PM' },
-  { type: 'Airtime', description: 'Airtel airtime', amount: -2500, status: 'Successful', date: 'Sep 28, 8:31 PM' },
-  { type: 'Cable', description: 'DStv Compact', amount: -15700, status: 'Successful', date: 'Sep 26, 1:07 PM' },
-];
-
-const serviceCards = [
-  { id: 'data', title: 'Buy Data', description: 'MTN, Airtel, Glo & 9mobile bundles', icon: Wifi, tone: 'emerald' },
-  { id: 'airtime', title: 'Buy Airtime', description: 'Instant airtime top-up', icon: Smartphone, tone: 'cyan' },
-  { id: 'electricity', title: 'Electricity', description: 'Pay prepaid & postpaid bills', icon: Zap, tone: 'amber' },
-  { id: 'cable', title: 'Cable TV', description: 'DStv, GOtv & StarTimes', icon: Cable, tone: 'violet' },
-  { id: 'airtime-cash', title: 'Airtime to Cash', description: 'Convert airtime to bank funds', icon: ArrowLeftRight, tone: 'rose' },
-  { id: 'exam-pins', title: 'Exam Pins', description: 'WAEC, NECO & NABTEB', icon: GraduationCap, tone: 'blue' },
-];
-
-const toneClasses: Record<string, string> = {
-  emerald: 'bg-emerald-400/10 text-emerald-300 border-emerald-400/20',
-  cyan: 'bg-cyan-400/10 text-cyan-300 border-cyan-400/20',
-  amber: 'bg-amber-400/10 text-amber-300 border-amber-400/20',
-  violet: 'bg-violet-400/10 text-violet-300 border-violet-400/20',
-  rose: 'bg-rose-400/10 text-rose-300 border-rose-400/20',
-  blue: 'bg-blue-400/10 text-blue-300 border-blue-400/20',
 };
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({ onExit }) => {
@@ -128,18 +61,28 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onExit }) => {
   const [section, setSection] = useState<DashboardSection>('overview');
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showFundModal, setShowFundModal] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
+
+  // Frontend KYC and PIN state architecture (prepared for backend integration)
+  const [kycStatus, setKycStatus] = useState<KycStatus>('not_started');
+  const [kycLevel, setKycLevel] = useState<KycLevel>(0);
+  const [pinSet, setPinSet] = useState(false);
 
   const displayName = useMemo(() => {
     const name = user?.user_metadata?.full_name;
-    return typeof name === 'string' && name.trim()
-      ? name.trim().split(' ')[0]
-      : user?.email?.split('@')[0] || 'Customer';
+    if (typeof name === 'string' && name.trim()) {
+      return name.trim();
+    }
+    return user?.email?.split('@')[0] || 'Partner';
   }, [user]);
 
-  const go = (next: DashboardSection) => {
-    setSection(next);
-    setMobileOpen(false);
-  };
+  const referralCode = useMemo(() => {
+    const code = user?.user_metadata?.referral_code;
+    if (typeof code === 'string' && code.trim()) {
+      return code.trim().toUpperCase();
+    }
+    return 'SUB' + (user?.id ? user.id.slice(0, 5).toUpperCase() : '782');
+  }, [user]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -148,10 +91,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onExit }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="text-center">
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+        <div className="text-center space-y-3">
           <div className="mx-auto h-10 w-10 rounded-full border-2 border-emerald-400 border-t-transparent animate-spin" />
-          <p className="mt-4 text-sm text-slate-400">Checking your secure session…</p>
+          <p className="text-xs text-slate-400 font-mono">Verifying secure customer session…</p>
         </div>
       </div>
     );
@@ -160,15 +103,20 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onExit }) => {
   if (!configured) {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6">
-        <div className="max-w-lg w-full rounded-3xl border border-amber-400/20 bg-slate-900 p-8 shadow-2xl">
-          <ShieldCheck className="h-10 w-10 text-amber-300" />
-          <h1 className="mt-5 text-2xl font-bold">Authentication setup required</h1>
-          <p className="mt-3 text-sm leading-6 text-slate-400">
-            The dashboard is intentionally locked until SUBPLUG is connected to a real authentication provider.
-            Add the Supabase environment variables from <code className="text-emerald-300">.env.example</code> in Netlify or your local environment.
+        <div className="max-w-md w-full rounded-3xl border border-amber-400/20 bg-slate-900 p-8 shadow-2xl space-y-4">
+          <div className="h-12 w-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-300 flex items-center justify-center">
+            <ShieldCheck className="h-6 w-6" />
+          </div>
+          <h1 className="text-2xl font-bold">Authentication setup required</h1>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            The dashboard is protected until SUBPLUG is connected to the authentication environment.
+            Please configure your Supabase variables in <code className="text-emerald-300">.env.example</code>.
           </p>
-          <button onClick={onExit} className="mt-6 rounded-xl bg-emerald-400 px-5 py-3 font-bold text-slate-950">
-            Return to SUBPLUG
+          <button
+            onClick={onExit}
+            className="w-full rounded-xl bg-emerald-400 hover:bg-emerald-300 px-5 py-3 font-bold text-slate-950 text-xs transition-colors cursor-pointer"
+          >
+            Return to Landing Page
           </button>
         </div>
       </div>
@@ -178,437 +126,603 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onExit }) => {
   if (!user) {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6">
-        <div className="max-w-md w-full rounded-3xl border border-slate-800 bg-slate-900 p-8 text-center shadow-2xl">
+        <div className="max-w-md w-full rounded-3xl border border-slate-800 bg-slate-900 p-8 text-center shadow-2xl space-y-4">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-400/10 text-emerald-300">
-            <LockIcon />
+            <Lock className="h-7 w-7" />
           </div>
-          <h1 className="mt-5 text-2xl font-bold">Dashboard access is protected</h1>
-          <p className="mt-3 text-sm leading-6 text-slate-400">
-            Please sign in to access your wallet, purchases, reseller tools, API area and account settings.
+          <h1 className="text-2xl font-bold">Dashboard access is protected</h1>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Please sign in to access your wallet, transactions, reseller tools, Bulk SMS, and account settings.
           </p>
-          <button onClick={onExit} className="mt-6 w-full rounded-xl bg-emerald-400 px-5 py-3 font-bold text-slate-950">
-            Return to login
+          <button
+            onClick={onExit}
+            className="w-full rounded-xl bg-emerald-400 hover:bg-emerald-300 px-5 py-3 font-bold text-slate-950 text-xs transition-colors cursor-pointer"
+          >
+            Return to Login
           </button>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="flex min-h-screen">
-        <aside className={`fixed inset-y-0 left-0 z-50 w-72 transform border-r border-slate-800 bg-slate-950/98 backdrop-blur-xl transition-transform lg:static lg:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-          <div className="flex h-full flex-col">
-            <div className="flex h-20 items-center justify-between border-b border-slate-800 px-5">
-              <button onClick={onExit} className="flex items-center gap-3" aria-label="Return to SUBPLUG">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-300 to-cyan-400 text-slate-950 font-black shadow-lg shadow-emerald-500/20">
-                  S
-                </div>
-                <div className="text-left">
-                  <div className="font-black tracking-tight">SUBPLUG</div>
-                  <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500">Customer Portal</div>
-                </div>
-              </button>
-              <button className="lg:hidden rounded-lg p-2 text-slate-400 hover:bg-slate-900" onClick={() => setMobileOpen(false)} aria-label="Close menu">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+  const isService = [
+    'airtime',
+    'data',
+    'electricity',
+    'cable',
+    'data-pins',
+    'exam-pins',
+    'recharge',
+  ].includes(section);
 
-            <div className="flex-1 overflow-y-auto px-3 py-5">
-              {menuGroups.map((group) => (
-                <div key={group.title} className="mb-6">
-                  <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-600">{group.title}</div>
-                  <div className="space-y-1">
-                    {group.items.map((item) => {
-                      const Icon = item.icon;
-                      const active = section === item.id;
-                      return (
-                        <button
-                          key={item.id}
-                          onClick={() => go(item.id)}
-                          className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition ${active ? 'bg-emerald-400/10 text-emerald-300 ring-1 ring-emerald-400/20' : 'text-slate-400 hover:bg-slate-900 hover:text-white'}`}
-                        >
-                          <Icon className="h-4.5 w-4.5 shrink-0" />
-                          <span>{item.label}</span>
-                          {item.id === 'notifications' && <span className="ml-auto h-2 w-2 rounded-full bg-emerald-400" />}
-                        </button>
-                      );
-                    })}
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col antialiased selection:bg-emerald-500 selection:text-slate-950">
+      <div className="flex flex-1 min-h-screen">
+        {/* Desktop Sidebar & Mobile Slide Drawer */}
+        <DashboardSidebar
+          currentSection={section}
+          onNavigate={(sec) => {
+            setSection(sec);
+            setMobileOpen(false);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          onExitToHome={onExit}
+          onSignOut={handleSignOut}
+          onOpenHelp={() => setShowHelpModal(true)}
+          mobileOpen={mobileOpen}
+          onCloseMobile={() => setMobileOpen(false)}
+        />
+
+        {/* Main Content Viewport */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Top Bar */}
+          <DashboardTopBar
+            displayName={displayName}
+            userEmail={user.email}
+            onOpenMobileMenu={() => setMobileOpen(true)}
+            onNavigate={(sec) => {
+              setSection(sec);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onFundWallet={() => setShowFundModal(true)}
+            onSignOut={handleSignOut}
+            onExitToHome={onExit}
+          />
+
+          {/* Active Workspace Viewport */}
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full pb-24 lg:pb-8">
+            {/* 1. Overview Workspace */}
+            {section === 'overview' && (
+              <OverviewWorkspace
+                displayName={displayName}
+                onNavigate={(sec) => {
+                  setSection(sec);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                onFundWallet={() => setShowFundModal(true)}
+              />
+            )}
+
+            {/* 2. Main Wallet Workspace */}
+            {section === 'wallet' && (
+              <WalletWorkspace
+                onNavigate={setSection}
+                onOpenFundModal={() => setShowFundModal(true)}
+                kycStatus={kycStatus}
+              />
+            )}
+
+            {/* 3. Bonus Wallet Workspace */}
+            {section === 'bonus-wallet' && (
+              <BonusWalletWorkspace onNavigate={setSection} />
+            )}
+
+            {/* 4. Cashback Workspace */}
+            {section === 'cashback' && (
+              <CashbackWorkspace onNavigate={setSection} />
+            )}
+
+            {/* 5. Referral Centre Workspace */}
+            {section === 'referral' && (
+              <ReferralWorkspace
+                userReferralCode={referralCode}
+                onNavigate={setSection}
+              />
+            )}
+
+            {/* 6. Bulk SMS Workspace */}
+            {section === 'bulk-sms' && <BulkSmsWorkspace />}
+
+            {/* 7. KYC & Verification Workspace */}
+            {section === 'kyc' && (
+              <KycWorkspace
+                currentKycStatus={kycStatus}
+                currentKycLevel={kycLevel}
+                onUpdateKycStatus={(newStatus, newLevel) => {
+                  setKycStatus(newStatus);
+                  setKycLevel(newLevel);
+                }}
+              />
+            )}
+
+            {/* 8. Transaction PIN Workspace */}
+            {section === 'transaction-pin' && (
+              <TransactionPinWorkspace
+                pinSet={pinSet}
+                onPinSaved={() => setPinSet(true)}
+              />
+            )}
+
+            {/* 9. Airtime to Cash Workspace (KYC Gated & NO PIN required!) */}
+            {section === 'airtime-cash' && (
+              <AirtimeCashWorkspace
+                kycStatus={kycStatus}
+                onNavigate={setSection}
+              />
+            )}
+
+            {/* 10. Telecom & Utility Services with PIN authorization */}
+            {isService && (
+              <ServiceWorkspace section={section as any} />
+            )}
+
+            {/* 11. Transactions History */}
+            {section === 'transactions' && (
+              <div className="space-y-6 animate-in fade-in">
+                <div className="rounded-3xl border border-slate-800 bg-slate-900/60 p-6 sm:p-7 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-xl font-bold text-white">Transaction History</h2>
+                      <p className="text-xs text-slate-400">
+                        Authenticated ledger of all purchases, top-ups, and refunds
+                      </p>
+                    </div>
+                    <FileText className="h-5 w-5 text-slate-500" />
+                  </div>
+
+                  {/* Clean empty state (Requirement 38 & 41: no fake financial records) */}
+                  <div className="py-16 px-4 rounded-2xl border border-dashed border-slate-800 bg-slate-950/40 text-center space-y-3">
+                    <div className="h-12 w-12 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto text-slate-500">
+                      <Clock className="h-6 w-6" />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="text-sm font-bold text-white">No transactions yet</h4>
+                      <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                        Your transactions will appear here after you complete your first service purchase or wallet top-up.
+                      </p>
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
 
-            <div className="border-t border-slate-800 p-3">
-              <button onClick={handleSignOut} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-slate-400 hover:bg-slate-900 hover:text-white">
-                <LogOut className="h-4 w-4" />
-                Sign out
+            {/* 12. Reseller Centre */}
+            {section === 'reseller' && (
+              <div className="space-y-6 animate-in fade-in">
+                <div className="rounded-3xl border border-amber-500/30 bg-gradient-to-br from-slate-900 via-slate-900 to-amber-950/30 p-6 sm:p-8 space-y-4">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-mono font-bold tracking-wide">
+                    <TrendingUp className="h-3.5 w-3.5" />
+                    <span>WHOLESALE PARTNERSHIP</span>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
+                    Reseller Centre
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+                    Unlock primary wholesale telecom rates (MTN from ₦240/GB, Airtel from ₦248/GB), dedicated sub-second switches, and developer API credentials.
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
+                    <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800">
+                      <span className="text-[10px] text-slate-500 font-mono uppercase block">Your Account Tier</span>
+                      <span className="text-base font-bold text-white">Standard Customer</span>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800">
+                      <span className="text-[10px] text-slate-500 font-mono uppercase block">Reseller License</span>
+                      <span className="text-base font-bold text-amber-400">₦1,500 (One-Time)</span>
+                    </div>
+                    <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800">
+                      <span className="text-[10px] text-slate-500 font-mono uppercase block">API Partner Tier</span>
+                      <span className="text-base font-bold text-white">₦3,500 (One-Time)</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-3">
+                    <h3 className="text-base font-bold text-white">Wholesale Reseller Tier</h3>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      Designed for university campus agents, cyber café operators, and kiosk owners selling directly to retail customers.
+                    </p>
+                    <button
+                      onClick={onExit}
+                      className="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition-colors cursor-pointer"
+                    >
+                      Upgrade on Vendor Portal (₦1,500)
+                    </button>
+                  </div>
+
+                  <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-3">
+                    <h3 className="text-base font-bold text-white">Developer API Access</h3>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      Integrate SUBPLUG directly into your custom mobile application, website, or fintech payment gateway.
+                    </p>
+                    <button
+                      onClick={() => setSection('api')}
+                      className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition-colors border border-slate-700 cursor-pointer"
+                    >
+                      Explore Developer API
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 13. Developer API Workspace */}
+            {section === 'api' && (
+              <div className="space-y-6 animate-in fade-in">
+                <div className="rounded-3xl border border-cyan-500/30 bg-gradient-to-br from-slate-900 via-slate-900 to-cyan-950/30 p-6 sm:p-8 space-y-3">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-mono font-bold tracking-wide">
+                    <Code2 className="h-3.5 w-3.5" />
+                    <span>RESTFUL API GATEWAY</span>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
+                    Developer API & Webhooks
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+                    A dedicated protected workspace for API onboarding, documentation, and credential management. Secrets are generated server-side.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 space-y-3">
+                    <h3 className="font-bold text-white">API Credentials</h3>
+                    <p className="text-xs text-slate-400">
+                      Live secrets are generated and rotated server-side. Production API keys are protected behind two-factor authorization.
+                    </p>
+                    <button
+                      disabled
+                      className="mt-3 px-4 py-2.5 rounded-xl bg-slate-800 text-slate-500 font-bold text-xs cursor-not-allowed"
+                    >
+                      Generate Sandbox Key (Backend Disabled)
+                    </button>
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 space-y-3">
+                    <h3 className="font-bold text-white">Interactive Documentation</h3>
+                    <p className="text-xs text-slate-400">
+                      Inspect endpoints, request payloads, response codes, and webhook callbacks.
+                    </p>
+                    <button
+                      onClick={onExit}
+                      className="mt-3 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 transition-colors cursor-pointer flex items-center gap-1.5"
+                    >
+                      <span>View Vendor Documentation</span>
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 14. Hardware Store Workspace */}
+            {section === 'store' && (
+              <div className="space-y-6 animate-in fade-in">
+                <div className="rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950 p-6 sm:p-8 space-y-3">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono font-bold tracking-wide">
+                    <ShoppingBag className="h-3.5 w-3.5" />
+                    <span>CERTIFIED HARDWARE MART</span>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
+                    SUBPLUG Store
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+                    Order certified Android POS terminals, high-gain 4G desktop routers, portable pocket MiFi units, and thermal printing supplies with 1-year warranty.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {STORE_PRODUCTS.map((product) => (
+                    <div
+                      key={product.id}
+                      className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 flex flex-col justify-between space-y-4"
+                    >
+                      <div className="space-y-2">
+                        <div className="h-10 w-10 rounded-xl bg-slate-800 text-emerald-400 flex items-center justify-center">
+                          <Package className="h-5 w-5" />
+                        </div>
+                        <span className="text-[10px] font-mono uppercase text-slate-500">{product.category}</span>
+                        <h3 className="text-sm font-bold text-white">{product.title}</h3>
+                        <p className="text-xs text-slate-400 line-clamp-2">{product.description}</p>
+                        <div className="text-base font-extrabold text-emerald-400 font-mono pt-1">
+                          ₦{product.price.toLocaleString()}
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={onExit}
+                        className="w-full py-2.5 px-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white text-xs font-semibold transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                      >
+                        <span>Order in Store</span>
+                        <ArrowUpRight className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 15. User Profile Workspace */}
+            {section === 'profile' && (
+              <div className="space-y-6 max-w-3xl animate-in fade-in">
+                <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-6 sm:p-8 space-y-6">
+                  <div className="flex items-center gap-4">
+                    <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-cyan-400 text-slate-950 font-black text-2xl flex items-center justify-center shadow-lg">
+                      {displayName.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-white">{displayName}</h2>
+                      <p className="text-xs text-slate-400">{user.email}</p>
+                      <span className="inline-flex items-center gap-1 text-[10px] font-mono text-emerald-400 mt-1">
+                        <ShieldCheck className="h-3.5 w-3.5" />
+                        <span>Authenticated Member</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                      <span className="text-slate-500 text-[10px] uppercase font-mono">Full Name</span>
+                      <div className="text-white font-semibold">{displayName}</div>
+                    </div>
+                    <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                      <span className="text-slate-500 text-[10px] uppercase font-mono">Email Address</span>
+                      <div className="text-white font-mono">{user.email}</div>
+                    </div>
+                    <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                      <span className="text-slate-500 text-[10px] uppercase font-mono">Referral Code</span>
+                      <div className="text-emerald-400 font-mono font-bold">{referralCode}</div>
+                    </div>
+                    <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                      <span className="text-slate-500 text-[10px] uppercase font-mono">Account Tier</span>
+                      <div className="text-white font-semibold">Standard Customer</div>
+                    </div>
+                    <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                      <span className="text-slate-500 text-[10px] uppercase font-mono">KYC Level</span>
+                      <div className="text-white font-semibold">
+                        Level {kycLevel} ({kycStatus === 'verified' ? 'Verified' : 'Unverified'})
+                      </div>
+                    </div>
+                    <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                      <span className="text-slate-500 text-[10px] uppercase font-mono">Transaction PIN</span>
+                      <div className="text-white font-semibold">
+                        {pinSet ? 'Set (Frontend Session)' : 'Not Set (Demo)'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 flex flex-wrap gap-3">
+                    <button
+                      onClick={() => setSection('kyc')}
+                      className="px-4 py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs transition-colors cursor-pointer"
+                    >
+                      Manage KYC
+                    </button>
+                    <button
+                      onClick={() => setSection('transaction-pin')}
+                      className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs border border-slate-700 transition-colors cursor-pointer"
+                    >
+                      Manage Security PIN
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 16. Notifications Workspace */}
+            {section === 'notifications' && (
+              <div className="space-y-6 max-w-3xl animate-in fade-in">
+                <div className="rounded-3xl border border-slate-800 bg-slate-900/60 p-6 sm:p-7 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-xl font-bold text-white">Notifications</h2>
+                      <p className="text-xs text-slate-400">Account security, order dispatches, and bonus alerts</p>
+                    </div>
+                    <Bell className="h-5 w-5 text-slate-500" />
+                  </div>
+
+                  <div className="py-12 px-4 rounded-2xl border border-dashed border-slate-800 bg-slate-950/40 text-center space-y-3">
+                    <div className="h-12 w-12 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto text-slate-500">
+                      <Bell className="h-6 w-6" />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="text-sm font-bold text-white">No notifications</h4>
+                      <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                        You're all caught up! Account updates and transaction receipts will appear here.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 17. Security Workspace */}
+            {section === 'security' && (
+              <div className="space-y-6 max-w-3xl animate-in fade-in">
+                <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-6 sm:p-8 space-y-6">
+                  <div>
+                    <h2 className="text-xl font-bold text-white">Account Security</h2>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Manage authentication factors and purchase authorization settings.
+                    </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-4">
+                      <div className="space-y-1">
+                        <h4 className="text-xs font-bold text-white">4-Digit Transaction PIN</h4>
+                        <p className="text-[11px] text-slate-400">
+                          Transaction PIN security will be enforced server-side when live transactions are enabled.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setSection('transaction-pin')}
+                        className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs border border-slate-700 transition-colors cursor-pointer shrink-0"
+                      >
+                        {pinSet ? 'Change PIN' : 'Configure PIN'}
+                      </button>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-4">
+                      <div className="space-y-1">
+                        <h4 className="text-xs font-bold text-white">KYC Verification Status</h4>
+                        <p className="text-[11px] text-slate-400">
+                          Required for Airtime to Cash conversion and automated funding.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setSection('kyc')}
+                        className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs border border-slate-700 transition-colors cursor-pointer shrink-0"
+                      >
+                        View Verification
+                      </button>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-4">
+                      <div className="space-y-1">
+                        <h4 className="text-xs font-bold text-white">Session Security</h4>
+                        <p className="text-[11px] text-slate-400">
+                          Active authenticated session: {user.email}
+                        </p>
+                      </div>
+                      <span className="text-[11px] text-emerald-400 font-mono font-bold">
+                        Encrypted
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 18. Admin Landing Page Content: Our Partners CMS */}
+            {section === 'admin-partners' && (
+              <AdminPartnersWorkspace />
+            )}
+
+            {/* 19. Dedicated Rewards Suite */}
+            {section === 'rewards' && (
+              <RewardsWorkspace
+                initialTab="promos"
+                onNavigateToWallet={() => setSection('wallet')}
+                onNavigateToBonusWallet={() => setSection('bonus-wallet')}
+              />
+            )}
+
+            {/* 19b. SUBPLUG Points Loyalty System */}
+            {section === 'points' && (
+              <RewardsWorkspace
+                initialTab="points"
+                onNavigateToWallet={() => setSection('wallet')}
+                onNavigateToBonusWallet={() => setSection('bonus-wallet')}
+              />
+            )}
+
+            {/* 20. Direct Voucher Redemption Funding */}
+            {section === 'vouchers' && (
+              <RewardsWorkspace
+                initialTab="vouchers"
+                onNavigateToWallet={() => setSection('wallet')}
+                onNavigateToBonusWallet={() => setSection('bonus-wallet')}
+              />
+            )}
+
+            {/* 21. Customer Dispute & Switch Resolution Center */}
+            {section === 'resolution' && (
+              <ResolutionWorkspace />
+            )}
+
+            {/* 22. Full Admin Landing Page CMS Suite */}
+            {section === 'admin-cms' && (
+              <AdminCmsWorkspace />
+            )}
+
+            {/* 23. Admin Rewards & Vouchers Suite */}
+            {section === 'admin-rewards' && (
+              <AdminRewardsWorkspace />
+            )}
+
+            {/* 24. Admin Dispute & Switch Resolution Desk */}
+            {section === 'admin-resolution' && (
+              <AdminResolutionWorkspace />
+            )}
+
+            {/* 25. Admin System Controls */}
+            {section === 'admin-system' && (
+              <AdminCmsWorkspace />
+            )}
+          </main>
+        </div>
+      </div>
+
+      {/* Mobile Bottom Navigation Bar */}
+      <DashboardMobileNav
+        currentSection={section}
+        onNavigate={(sec) => {
+          setSection(sec);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        onOpenMoreDrawer={() => setMobileOpen(true)}
+      />
+
+      {/* Fund Wallet Modal */}
+      <FundWalletModal
+        isOpen={showFundModal}
+        kycStatus={kycStatus}
+        onClose={() => setShowFundModal(false)}
+        onNavigateToKyc={() => {
+          setSection('kyc');
+          setShowFundModal(false);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+      />
+
+      {/* Quick Help Modal */}
+      {showHelpModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-sm rounded-3xl border border-slate-800 bg-slate-900 p-6 space-y-4 shadow-2xl relative">
+            <button
+              onClick={() => setShowHelpModal(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <div className="text-center space-y-2">
+              <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
+                <MessageCircle className="h-6 w-6" />
+              </div>
+              <h3 className="text-lg font-bold text-white">SUBPLUG Support Desk</h3>
+              <p className="text-xs text-slate-400">
+                Need assistance with a recharge, wallet top-up, or partner inquiry?
+              </p>
+            </div>
+            <div className="space-y-2">
+              <a
+                href="https://wa.me/2348101234567?text=Hello%20Subplug,%20I%20need%20support%20with%20my%20dashboard%20account"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-3 px-4 rounded-xl bg-[#25D366] hover:bg-[#20ba59] text-slate-950 font-bold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>Chat on WhatsApp Live</span>
+              </a>
+              <button
+                onClick={() => setShowHelpModal(false)}
+                className="w-full py-2.5 px-4 rounded-xl bg-slate-950 border border-slate-800 text-slate-400 hover:text-white text-xs font-semibold transition-colors cursor-pointer"
+              >
+                Close
               </button>
             </div>
           </div>
-        </aside>
-
-        {mobileOpen && <button className="fixed inset-0 z-40 bg-slate-950/70 lg:hidden" onClick={() => setMobileOpen(false)} aria-label="Close navigation overlay" />}
-
-        <main className="min-w-0 flex-1">
-          <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-950/85 backdrop-blur-xl">
-            <div className="flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
-              <div className="flex items-center gap-3">
-                <button onClick={() => setMobileOpen(true)} className="rounded-xl border border-slate-800 p-2.5 text-slate-300 lg:hidden" aria-label="Open navigation">
-                  <Menu className="h-5 w-5" />
-                </button>
-                <div>
-                  <div className="text-xs text-slate-500">Secure customer portal</div>
-                  <h1 className="text-lg sm:text-xl font-bold text-white">
-                    {section === 'overview' ? `Good day, ${displayName}` : menuGroups.flatMap((g) => g.items).find((i) => i.id === section)?.label}
-                  </h1>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 sm:gap-3">
-                <button onClick={() => go('notifications')} className="relative rounded-xl border border-slate-800 bg-slate-900/70 p-2.5 text-slate-300 hover:text-white" aria-label="Notifications">
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                </button>
-                <button onClick={() => go('profile')} className="flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/70 px-2.5 py-2 hover:border-slate-700">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-400 text-xs font-black text-slate-950">{displayName.charAt(0).toUpperCase()}</div>
-                  <span className="hidden sm:block text-sm font-semibold text-slate-200">{displayName}</span>
-                </button>
-              </div>
-            </div>
-          </header>
-
-          <div className="mx-auto max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">
-            {section === 'overview' && (
-              <Overview displayName={displayName} onFund={() => setShowFundModal(true)} onNavigate={go} />
-            )}
-            {section === 'transactions' && <Transactions />}
-            {section === 'notifications' && <Notifications />}
-            {['data', 'airtime', 'electricity', 'cable', 'airtime-cash', 'exam-pins', 'recharge'].includes(section) && (
-              <ServiceWorkspace section={section} />
-            )}
-            {section === 'reseller' && <ResellerWorkspace onNavigate={go} />}
-            {section === 'api' && <ApiWorkspace />}
-            {section === 'store' && <StoreWorkspace />}
-            {section === 'profile' && <ProfileWorkspace user={user} />}
-            {section === 'security' && <SecurityWorkspace user={user} />}
-          </div>
-        </main>
-      </div>
-
-      {showFundModal && <FundWalletModal onClose={() => setShowFundModal(false)} />}
+        </div>
+      )}
     </div>
   );
 };
-
-const LockIcon = () => <ShieldCheck className="h-7 w-7" />;
-
-const Overview: React.FC<{
-  displayName: string;
-  onFund: () => void;
-  onNavigate: (section: DashboardSection) => void;
-}> = ({ displayName, onFund, onNavigate }) => (
-  <div className="space-y-6">
-    <section className="relative overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/40 p-6 sm:p-8">
-      <div className="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-emerald-400/10 blur-3xl" />
-      <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-emerald-300">
-            <ShieldCheck className="h-4 w-4" /> Protected workspace
-          </div>
-          <h2 className="mt-3 max-w-2xl text-3xl font-black tracking-tight text-white sm:text-4xl">
-            One dashboard for every SUBPLUG service.
-          </h2>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">
-            Buy telecom bundles, settle bills, manage your reseller business, access the developer API and track every transaction from one secure workspace.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button onClick={onFund} className="rounded-xl bg-emerald-400 px-4 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-500/10">Fund wallet</button>
-          <button onClick={() => onNavigate('transactions')} className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-white">View transactions</button>
-        </div>
-      </div>
-    </section>
-
-    <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <StatCard icon={Wallet} label="Available balance" value={money(0)} note="Connect wallet ledger" />
-      <StatCard icon={ArrowDownToLine} label="Total funded" value={money(0)} note="Live after wallet backend" />
-      <StatCard icon={CircleDollarSign} label="Total spent" value={money(0)} note="Live after transactions backend" />
-      <StatCard icon={Users} label="Referral earnings" value={money(0)} note="Available after referral setup" />
-    </section>
-
-    <section>
-      <div className="mb-4 flex items-end justify-between">
-        <div>
-          <h3 className="text-lg font-bold text-white">Quick services</h3>
-          <p className="text-sm text-slate-500">Everything you can manage from your account.</p>
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-        {serviceCards.map((service) => {
-          const Icon = service.icon;
-          return (
-            <button key={service.id} onClick={() => onNavigate(service.id as DashboardSection)} className="group rounded-2xl border border-slate-800 bg-slate-900/70 p-4 text-left transition hover:-translate-y-0.5 hover:border-slate-700 hover:bg-slate-900">
-              <div className={`flex h-11 w-11 items-center justify-center rounded-xl border ${toneClasses[service.tone]}`}>
-                <Icon className="h-5 w-5" />
-              </div>
-              <div className="mt-4 text-sm font-bold text-white">{service.title}</div>
-              <div className="mt-1 text-[11px] leading-5 text-slate-500">{service.description}</div>
-              <ChevronRight className="mt-3 h-4 w-4 text-slate-600 transition group-hover:translate-x-1 group-hover:text-emerald-300" />
-            </button>
-          );
-        })}
-      </div>
-    </section>
-
-    <section className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
-      <div className="rounded-3xl border border-slate-800 bg-slate-900/60 p-5 sm:p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-bold text-white">Recent activity</h3>
-            <p className="text-xs text-slate-500">Your latest account events.</p>
-          </div>
-          <button onClick={() => onNavigate('transactions')} className="text-xs font-bold text-emerald-300">View all</button>
-        </div>
-        <div className="mt-5 divide-y divide-slate-800/80">
-          {transactions.map((item) => (
-            <div key={item.description} className="flex items-center gap-3 py-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-800 text-slate-300">
-                {item.type === 'Data' ? <Wifi className="h-4 w-4" /> : item.type === 'Wallet' ? <Wallet className="h-4 w-4" /> : item.type === 'Cable' ? <Cable className="h-4 w-4" /> : <Smartphone className="h-4 w-4" />}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-semibold text-white">{item.description}</div>
-                <div className="text-xs text-slate-500">{item.date}</div>
-              </div>
-              <div className="text-right">
-                <div className={`text-sm font-bold ${item.amount > 0 ? 'text-emerald-300' : 'text-slate-200'}`}>{item.amount > 0 ? '+' : ''}{money(Math.abs(item.amount))}</div>
-                <div className="text-[10px] text-emerald-400">{item.status}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="rounded-3xl border border-emerald-400/15 bg-gradient-to-br from-emerald-400/10 to-cyan-400/5 p-6">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-400 text-slate-950"><Users className="h-5 w-5" /></div>
-        <h3 className="mt-5 text-xl font-black text-white">Grow with SUBPLUG</h3>
-        <p className="mt-2 text-sm leading-6 text-slate-400">Unlock wholesale rates, reseller tools and API access when you upgrade your account.</p>
-        <button onClick={() => onNavigate('reseller')} className="mt-6 flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-bold text-slate-950">Explore reseller tools <ArrowUpRight className="h-4 w-4" /></button>
-      </div>
-    </section>
-  </div>
-);
-
-const StatCard: React.FC<{ icon: React.ElementType; label: string; value: string; note: string }> = ({ icon: Icon, label, value, note }) => (
-  <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-    <div className="flex items-center justify-between">
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800 text-emerald-300"><Icon className="h-5 w-5" /></div>
-      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600">Account</span>
-    </div>
-    <div className="mt-5 text-2xl font-black text-white">{value}</div>
-    <div className="mt-1 text-xs font-semibold text-slate-400">{label}</div>
-    <div className="mt-2 text-[10px] text-slate-600">{note}</div>
-  </div>
-);
-
-const ServiceWorkspace: React.FC<{ section: Exclude<DashboardSection, 'overview'|'transactions'|'notifications'|'reseller'|'api'|'store'|'profile'|'security'> }> = ({ section }) => {
-  const config = {
-    data: { title: 'Buy Data', subtitle: 'Choose a network bundle and deliver it instantly to a Nigerian phone number.', icon: Wifi, fields: ['Network', 'Phone number', 'Data plan'] },
-    airtime: { title: 'Buy Airtime', subtitle: 'Top up any supported Nigerian network in seconds.', icon: Smartphone, fields: ['Network', 'Phone number', 'Amount'] },
-    electricity: { title: 'Pay Electricity', subtitle: 'Pay prepaid or postpaid electricity bills with meter validation.', icon: Zap, fields: ['DisCo', 'Meter number', 'Amount'] },
-    cable: { title: 'Cable TV', subtitle: 'Manage DStv, GOtv and StarTimes subscriptions.', icon: Cable, fields: ['Provider', 'Smartcard / IUC', 'Bouquet'] },
-    'airtime-cash': { title: 'Airtime to Cash', subtitle: 'Start a verified airtime conversion request and track its status.', icon: ArrowLeftRight, fields: ['Network', 'Phone number', 'Amount'] },
-    'exam-pins': { title: 'Exam Pins', subtitle: 'Purchase official result-checking pins when the service is connected.', icon: GraduationCap, fields: ['Exam body', 'Quantity', 'Email / phone'] },
-    recharge: { title: 'Recharge Card Printing', subtitle: 'Generate and manage printable recharge e-pins for your customers.', icon: ReceiptText, fields: ['Network', 'Quantity', 'Value per PIN'] },
-  }[section];
-
-  const Icon = config.icon;
-
-  return (
-    <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950 p-6 sm:p-8">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-400/10 text-emerald-300"><Icon className="h-6 w-6" /></div>
-        <h2 className="mt-5 text-3xl font-black text-white">{config.title}</h2>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">{config.subtitle}</p>
-      </div>
-      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-        <div className="rounded-3xl border border-slate-800 bg-slate-900/60 p-5 sm:p-7">
-          <div className="flex items-center gap-2 text-xs font-bold text-amber-300"><RefreshCw className="h-4 w-4" /> Secure checkout pipeline</div>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            {config.fields.map((field) => (
-              <label key={field} className="space-y-2">
-                <span className="text-xs font-semibold text-slate-300">{field}</span>
-                <input disabled placeholder={field} className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-slate-500 outline-none" />
-              </label>
-            ))}
-          </div>
-          <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-xs leading-5 text-slate-500">
-            Live transactions are intentionally disabled in this frontend until the SUBPLUG backend / VTU provider endpoints are connected. This prevents users from submitting fake or client-side-only payments.
-          </div>
-          <button disabled className="mt-5 w-full cursor-not-allowed rounded-xl bg-slate-800 px-4 py-3 text-sm font-bold text-slate-500">Connect secure payment backend</button>
-        </div>
-        <div className="rounded-3xl border border-emerald-400/15 bg-emerald-400/5 p-6">
-          <ShieldCheck className="h-6 w-6 text-emerald-300" />
-          <h3 className="mt-4 font-bold text-white">Protected by authentication</h3>
-          <p className="mt-2 text-xs leading-5 text-slate-500">Only an authenticated SUBPLUG user can reach this workspace. Final purchase authorization must also be enforced by the backend using the authenticated user's JWT and server-side validation.</p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const Transactions = () => (
-  <div className="rounded-3xl border border-slate-800 bg-slate-900/60 p-5 sm:p-7">
-    <div className="flex items-center justify-between">
-      <div><h2 className="text-2xl font-black text-white">Transactions</h2><p className="mt-1 text-sm text-slate-500">Your authenticated transaction history.</p></div>
-      <FileText className="h-6 w-6 text-slate-500" />
-    </div>
-    <div className="mt-6 overflow-x-auto">
-      <table className="w-full min-w-[680px] text-left text-sm">
-        <thead className="border-b border-slate-800 text-xs uppercase tracking-wider text-slate-600"><tr><th className="pb-3">Service</th><th className="pb-3">Description</th><th className="pb-3">Amount</th><th className="pb-3">Status</th><th className="pb-3">Date</th></tr></thead>
-        <tbody className="divide-y divide-slate-800/70">{transactions.map((t) => <tr key={t.description}><td className="py-4 text-slate-300">{t.type}</td><td className="py-4 font-semibold text-white">{t.description}</td><td className={`py-4 font-bold ${t.amount > 0 ? 'text-emerald-300' : 'text-slate-200'}`}>{t.amount > 0 ? '+' : '-'}{money(Math.abs(t.amount))}</td><td className="py-4"><span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/10 px-2 py-1 text-[10px] font-bold text-emerald-300"><CheckCircle2 className="h-3 w-3" />{t.status}</span></td><td className="py-4 text-slate-500">{t.date}</td></tr>)}</tbody>
-      </table>
-    </div>
-  </div>
-);
-
-const Notifications = () => (
-  <div className="space-y-4">
-    {[
-      ['Security alert', 'Your authenticated dashboard session is active. Keep your password private.', ShieldCheck],
-      ['Wallet', 'Wallet funding and live transaction notifications will appear here after backend integration.', Wallet],
-      ['Reseller', 'Upgrade your account to unlock wholesale and API features.', Users],
-    ].map(([title, text, Icon]) => (
-      <div key={String(title)} className="flex gap-4 rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-800 text-emerald-300"><Icon className="h-5 w-5" /></div>
-        <div><div className="font-bold text-white">{String(title)}</div><p className="mt-1 text-sm leading-6 text-slate-500">{String(text)}</p></div>
-      </div>
-    ))}
-  </div>
-);
-
-const ResellerWorkspace: React.FC<{ onNavigate: (section: DashboardSection) => void }> = ({ onNavigate }) => (
-  <div className="space-y-6">
-    <div className="rounded-3xl border border-amber-400/20 bg-gradient-to-br from-amber-400/10 via-slate-900 to-slate-950 p-6 sm:p-8">
-      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-400/10 text-amber-300"><Users className="h-6 w-6" /></div>
-      <h2 className="mt-5 text-3xl font-black text-white">Reseller Centre</h2>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">Manage your reseller upgrade, wholesale rates, referral earnings and API access from one place.</p>
-      <div className="mt-6 grid gap-3 sm:grid-cols-3">
-        <Metric label="Tier" value="Customer" />
-        <Metric label="Monthly profit" value="₦0.00" />
-        <Metric label="Referral balance" value="₦0.00" />
-      </div>
-    </div>
-    <div className="grid gap-4 md:grid-cols-3">
-      {[
-        ['Upgrade to reseller', 'Unlock wholesale pricing and reseller tools.', TrendingIcon],
-        ['Referral programme', 'Invite customers and track eligible rewards.', Users],
-        ['API partner', 'Build your own VTU-powered app or platform.', Code2],
-      ].map(([title, text, Icon]) => (
-        <div key={String(title)} className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-          <Icon className="h-5 w-5 text-emerald-300" />
-          <h3 className="mt-4 font-bold text-white">{String(title)}</h3>
-          <p className="mt-2 text-xs leading-5 text-slate-500">{String(text)}</p>
-          <button onClick={() => String(title).includes('API') ? onNavigate('api') : undefined} className="mt-5 text-xs font-bold text-emerald-300">Explore →</button>
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
-const TrendingIcon = () => <ArrowUpRight className="h-5 w-5" />;
-
-const Metric: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <div className="rounded-2xl border border-white/10 bg-slate-950/30 p-4"><div className="text-[10px] uppercase tracking-wider text-slate-500">{label}</div><div className="mt-2 text-lg font-black text-white">{value}</div></div>
-);
-
-const ApiWorkspace = () => (
-  <div className="space-y-6">
-    <div className="rounded-3xl border border-cyan-400/20 bg-gradient-to-br from-cyan-400/10 via-slate-900 to-slate-950 p-6 sm:p-8">
-      <Code2 className="h-7 w-7 text-cyan-300" />
-      <h2 className="mt-5 text-3xl font-black text-white">Developer API</h2>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">A protected workspace for API onboarding, documentation and credential management. Secrets should be generated and rotated by the backend—not hard-coded in this frontend.</p>
-      <div className="mt-6 flex flex-wrap gap-3">
-        <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1.5 text-xs font-bold text-cyan-300">REST API</span>
-        <span className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs font-bold text-slate-300">Webhooks</span>
-        <span className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs font-bold text-slate-300">Idempotency</span>
-      </div>
-    </div>
-    <div className="grid gap-6 lg:grid-cols-2">
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6"><h3 className="font-bold text-white">API credentials</h3><p className="mt-2 text-sm text-slate-500">No live secret is displayed in the browser UI. Credential generation should be handled by a protected server endpoint.</p><button disabled className="mt-5 rounded-xl bg-slate-800 px-4 py-3 text-sm font-bold text-slate-500">Generate credential</button></div>
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6"><h3 className="font-bold text-white">Documentation</h3><p className="mt-2 text-sm text-slate-500">Connect the production API docs here when the backend contract is finalized.</p><button disabled className="mt-5 rounded-xl border border-slate-700 px-4 py-3 text-sm font-bold text-slate-500">Open API docs</button></div>
-    </div>
-  </div>
-);
-
-const StoreWorkspace = () => (
-  <div className="space-y-6">
-    <div className="rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950 p-6 sm:p-8">
-      <ShoppingBag className="h-7 w-7 text-emerald-300" />
-      <h2 className="mt-5 text-3xl font-black text-white">SUBPLUG Store</h2>
-      <p className="mt-2 text-sm leading-6 text-slate-400">Manage POS terminals, MiFi devices, thermal printers and other products from your authenticated account.</p>
-    </div>
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {[
-        ['POS Terminal', '₦38,500', 'Hardware'],
-        ['4G Pocket WiFi', '₦18,500', 'Connectivity'],
-        ['58mm Thermal Printer', '₦16,000', 'Hardware'],
-      ].map(([name, price, category]) => (
-        <div key={name} className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-800 text-emerald-300"><Package className="h-5 w-5" /></div>
-          <div className="mt-4 text-xs text-slate-500">{category}</div>
-          <h3 className="mt-1 font-bold text-white">{name}</h3>
-          <div className="mt-3 text-lg font-black text-emerald-300">{price}</div>
-          <button disabled className="mt-5 w-full rounded-xl bg-slate-800 px-4 py-3 text-xs font-bold text-slate-500">Checkout after store backend</button>
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
-const ProfileWorkspace: React.FC<{ user: NonNullable<ReturnType<typeof useAuth>['user']> }> = ({ user }) => (
-  <div className="max-w-3xl rounded-3xl border border-slate-800 bg-slate-900/60 p-6 sm:p-8">
-    <UserRound className="h-7 w-7 text-emerald-300" />
-    <h2 className="mt-5 text-2xl font-black text-white">Profile</h2>
-    <div className="mt-6 space-y-4">
-      <ReadOnlyField label="Email" value={user.email || '—'} />
-      <ReadOnlyField label="Full name" value={String(user.user_metadata?.full_name || '—')} />
-      <ReadOnlyField label="Phone" value={String(user.user_metadata?.phone || '—')} />
-      <ReadOnlyField label="User ID" value={user.id} mono />
-    </div>
-  </div>
-);
-
-const ReadOnlyField: React.FC<{ label: string; value: string; mono?: boolean }> = ({ label, value, mono }) => (
-  <div><div className="mb-2 text-xs font-semibold text-slate-400">{label}</div><div className={`rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-slate-300 ${mono ? 'font-mono text-xs' : ''}`}>{value}</div></div>
-);
-
-const SecurityWorkspace: React.FC<{ user: NonNullable<ReturnType<typeof useAuth>['user']> }> = ({ user }) => (
-  <div className="max-w-3xl space-y-4">
-    <div className="rounded-3xl border border-emerald-400/20 bg-emerald-400/5 p-6 sm:p-8">
-      <ShieldCheck className="h-7 w-7 text-emerald-300" />
-      <h2 className="mt-5 text-2xl font-black text-white">Account security</h2>
-      <p className="mt-2 text-sm leading-6 text-slate-400">Authentication is handled by Supabase Auth. Do not store passwords, service-role keys, payment secrets or VTU provider credentials in this React app.</p>
-      <div className="mt-6 flex items-center gap-3 rounded-2xl border border-emerald-400/15 bg-slate-950/40 p-4"><CheckCircle2 className="h-5 w-5 text-emerald-300" /><div><div className="text-sm font-bold text-white">Authenticated session active</div><div className="text-xs text-slate-500">{user.email}</div></div></div>
-    </div>
-    <div className="grid gap-4 sm:grid-cols-2">
-      <SecurityCard icon={LockIcon} title="Password" text="Change password through the authenticated provider flow." />
-      <SecurityCard icon={ShieldCheck} title="MFA" text="Enable TOTP / stronger authentication before enabling high-risk wallet actions." />
-    </div>
-  </div>
-);
-
-const SecurityCard: React.FC<{ icon: React.ElementType; title: string; text: string }> = ({ icon: Icon, title, text }) => (
-  <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5"><Icon className="h-5 w-5 text-emerald-300" /><h3 className="mt-4 font-bold text-white">{title}</h3><p className="mt-2 text-xs leading-5 text-slate-500">{text}</p></div>
-);
-
-const FundWalletModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (
-  <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
-    <div className="w-full max-w-md rounded-3xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
-      <div className="flex items-center justify-between"><div><h2 className="text-xl font-black text-white">Fund wallet</h2><p className="mt-1 text-xs text-slate-500">Secure funding options will appear here.</p></div><button onClick={onClose} className="rounded-lg p-2 text-slate-400 hover:bg-slate-800" aria-label="Close"><X className="h-5 w-5" /></button></div>
-      <div className="mt-6 space-y-3">
-        {[['Dedicated bank transfer', Wallet], ['Card / USSD', CreditCard]].map(([label, Icon]) => <button key={String(label)} disabled className="flex w-full items-center gap-3 rounded-2xl border border-slate-800 bg-slate-950 p-4 text-left opacity-60"><Icon className="h-5 w-5 text-emerald-300" /><div><div className="text-sm font-bold text-white">{String(label)}</div><div className="text-xs text-slate-500">Available after wallet backend is connected</div></div></button>)}
-      </div>
-      <div className="mt-5 rounded-2xl bg-amber-400/5 p-4 text-xs leading-5 text-slate-500">Payment credentials and wallet mutations must be verified server-side. This UI does not collect card numbers.</div>
-    </div>
-  </div>
-);

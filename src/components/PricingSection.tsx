@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { NetworkProvider, DataPlan } from '../types';
+import { DataPlan } from '../types';
 import { DATA_PLANS } from '../data/mockData';
 import { Check, ArrowRight, Zap, TrendingDown, Users } from 'lucide-react';
+import { useCms } from '../context/CmsContext';
 
 interface PricingSectionProps {
   onSelectPlan: (plan: DataPlan) => void;
@@ -14,10 +15,21 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
   onOpenPriceList,
   onOpenAuth,
 }) => {
-  const [selectedNetwork, setSelectedNetwork] = useState<NetworkProvider>('MTN');
+  const { cms } = useCms();
+  const pricingData = cms.pricing;
+
+  if (!pricingData.isVisible) return null;
+
+  const [selectedNetwork, setSelectedNetwork] = useState<string>('MTN');
   const [isVendorPricing, setIsVendorPricing] = useState(false);
 
-  const filteredPlans = DATA_PLANS.filter((p) => p.network === selectedNetwork);
+  // Map T2mobile to 9mobile mock plans if needed
+  const filteredPlans = DATA_PLANS.filter((p) => {
+    if (selectedNetwork === 'T2mobile') return p.network === '9mobile';
+    return p.network === selectedNetwork;
+  });
+
+  const networks = ['MTN', 'Airtel', 'Glo', 'T2mobile'];
 
   return (
     <section id="pricing" className="py-16 sm:py-20">
@@ -27,13 +39,13 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div>
             <div className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">
-              Transparent Wholesale Pricing
+              {pricingData.badgeText || 'Transparent Wholesale Pricing'}
             </div>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-              Best Data Rates in Nigeria
+              {pricingData.title || 'Best Data Rates in Nigeria'}
             </h2>
             <p className="mt-2 text-base text-slate-400 max-w-xl">
-              Compare end-user rates against wholesale vendor pricing. Never overpay for mobile data again.
+              {pricingData.subtitle || 'Compare end-user rates against wholesale vendor pricing. Never overpay for mobile data again.'}
             </p>
           </div>
 
@@ -41,7 +53,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
           <div className="flex items-center gap-3 bg-slate-900 p-1.5 rounded-xl border border-slate-800 self-start md:self-auto">
             <button
               onClick={() => setIsVendorPricing(false)}
-              className={`px-3 py-2 text-xs font-semibold rounded-lg transition-all ${
+              className={`px-3 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                 !isVendorPricing
                   ? 'bg-slate-800 text-white shadow-sm'
                   : 'text-slate-400 hover:text-white'
@@ -51,7 +63,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
             </button>
             <button
               onClick={() => setIsVendorPricing(true)}
-              className={`px-3 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+              className={`px-3 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
                 isVendorPricing
                   ? 'bg-emerald-500 text-slate-950 shadow-sm'
                   : 'text-emerald-400 hover:text-emerald-300'
@@ -65,13 +77,13 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
 
         {/* Network Selection Tabs */}
         <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-8 border-b border-slate-800/80 scrollbar-none">
-          {(['MTN', 'Airtel', 'Glo', '9mobile'] as NetworkProvider[]).map((net) => {
+          {networks.map((net) => {
             const isActive = selectedNetwork === net;
             return (
               <button
                 key={net}
                 onClick={() => setSelectedNetwork(net)}
-                className={`px-5 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all flex items-center gap-2 ${
+                className={`px-5 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer ${
                   isActive
                     ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
                     : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'
@@ -101,7 +113,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-xs font-semibold text-slate-400">
-                      {plan.network} {plan.type}
+                      {selectedNetwork === 'T2mobile' ? 'T2mobile' : plan.network} {plan.type}
                     </span>
                     {plan.popular && (
                       <span className="text-[11px] font-bold text-emerald-400 flex items-center gap-1">
@@ -170,20 +182,20 @@ export const PricingSection: React.FC<PricingSectionProps> = ({
               Need to see our complete rates across all networks?
             </h4>
             <p className="text-sm text-slate-400">
-              Download or view full tariff schedules for MTN, Airtel, Glo, 9mobile, and utility APIs.
+              Download or view full tariff schedules for MTN, Airtel, Glo, T2mobile, and utility APIs.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-3">
             <button
               onClick={onOpenPriceList}
-              className="px-5 py-2.5 text-sm font-semibold text-white bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors border border-slate-700"
+              className="px-5 py-2.5 text-sm font-semibold text-white bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors border border-slate-700 cursor-pointer"
             >
-              View Full Price List
+              {pricingData.priceListCtaLabel || 'View Full Price List'}
             </button>
             <button
               onClick={() => onOpenAuth('register')}
-              className="px-5 py-2.5 text-sm font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-xl shadow-sm transition-colors"
+              className="px-5 py-2.5 text-sm font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-xl shadow-sm transition-colors cursor-pointer"
             >
               Register for Vendor Rates
             </button>

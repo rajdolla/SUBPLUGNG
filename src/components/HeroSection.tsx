@@ -1,6 +1,6 @@
 import React from 'react';
-import { ShieldCheck, Zap, Headphones, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
-import { NetworkProvider } from '../types';
+import { ShieldCheck, Zap, Headphones, ArrowRight, Sparkles } from 'lucide-react';
+import { useCms } from '../context/CmsContext';
 
 interface HeroSectionProps {
   onOpenAuth: (tab: 'login' | 'register') => void;
@@ -8,6 +8,11 @@ interface HeroSectionProps {
 }
 
 export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenAuth, onExplorePricing }) => {
+  const { cms } = useCms();
+  const hero = cms.hero;
+
+  if (!hero.isVisible) return null;
+
   return (
     <section id="home" className="relative overflow-hidden pt-8 pb-16 lg:pt-16 lg:pb-24">
       {/* Background radial gradient glow */}
@@ -22,39 +27,39 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenAuth, onExploreP
             {/* Tagline text - No pill enclosure per design constitution */}
             <div className="flex items-center justify-center lg:justify-start gap-2 text-xs font-semibold text-emerald-400 tracking-wide">
               <Sparkles className="h-4 w-4" />
-              <span>Automated Nigerian Telecom & Utility Gateway</span>
+              <span>{hero.badgeText || 'Automated Nigerian Telecom & Utility Gateway'}</span>
               <span aria-hidden="true" className="text-slate-600">·</span>
-              <span className="text-slate-400">Over ₦420M Processed</span>
+              <span className="text-slate-400">{hero.badgeSubtext || 'Over ₦420M Processed'}</span>
             </div>
 
             {/* Headline with balanced text wrap */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.1] max-w-2xl mx-auto lg:mx-0 [text-wrap:balance]">
-              Instant Data, Airtime & Bill Payments at{' '}
+              {hero.titleLine1 || 'Instant Data, Airtime & Bill Payments at'}{' '}
               <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
-                Unbeatable Prices.
+                {hero.titleHighlight || 'Unbeatable Prices.'}
               </span>
             </h1>
 
             {/* Sub-headline */}
             <p className="text-lg sm:text-xl text-slate-300 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-              Join thousands of Nigerians enjoying seamless VTU services. Buy cheap data, pay electricity & cable bills, and become a vendor today with zero downtime.
+              {hero.subtitle || 'Join thousands of Nigerians enjoying seamless VTU services. Buy cheap data, pay electricity & cable bills, and become a vendor today with zero downtime.'}
             </p>
 
             {/* Primary CTAs: Large Create Free Account & Login */}
             <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-4 max-w-md mx-auto lg:mx-0">
               <button
-                onClick={() => onOpenAuth('register')}
+                onClick={() => onOpenAuth((hero.primaryCtaDestination as 'register' | 'login') || 'register')}
                 className="min-h-[52px] px-8 py-3.5 text-base font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-xl shadow-lg shadow-emerald-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group cursor-pointer"
               >
-                <span>Create Free Account</span>
+                <span>{hero.primaryCtaLabel || 'Create Free Account'}</span>
                 <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
               </button>
 
               <button
-                onClick={() => onOpenAuth('login')}
+                onClick={() => onOpenAuth((hero.secondaryCtaDestination as 'login' | 'register') || 'login')}
                 className="min-h-[52px] px-8 py-3.5 text-base font-semibold text-slate-200 border border-slate-700 hover:border-slate-500 bg-slate-900/60 hover:bg-slate-900 rounded-xl transition-all flex items-center justify-center cursor-pointer"
               >
-                Login to Dashboard
+                {hero.secondaryCtaLabel || 'Login to Dashboard'}
               </button>
             </div>
 
@@ -129,7 +134,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenAuth, onExploreP
                       <div className="text-[10px] text-slate-400">from ₦235</div>
                     </div>
                     <div className="py-2 bg-slate-900 border border-slate-800 rounded-lg">
-                      <div className="font-bold text-lime-400">9mobile</div>
+                      <div className="font-bold text-sky-400">T2mobile</div>
                       <div className="text-[10px] text-slate-400">from ₦220</div>
                     </div>
                   </div>
