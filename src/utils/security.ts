@@ -74,19 +74,13 @@ export function cleanRawInput(input: string, maxLength = 100): string {
  */
 export function isValidNigerianPhone(phone: string): boolean {
   const digits = phone.replace(/\D/g, '');
-  // Format 1: 11 digits starting with 070, 080, 081, 090, 091, 071
-  if (/^0[789][01]\d{8}$/.test(digits)) {
-    return true;
-  }
-  // Format 2: 13 digits starting with 234 followed by 70, 80, 81, 90, 91, 71
-  if (/^234[789][01]\d{8}$/.test(digits)) {
-    return true;
-  }
+  if (/^0[789][01]\d{8}$/.test(digits)) return true;
+  if (/^234[789][01]\d{8}$/.test(digits)) return true;
   return false;
 }
 
 /**
- * Normalizes phone number into standard 11-digit Nigerian format
+ * Normalizes a Nigerian number into the canonical local 11-digit format.
  */
 export function normalizeNigerianPhone(phone: string): string {
   const digits = phone.replace(/\D/g, '');
@@ -94,6 +88,36 @@ export function normalizeNigerianPhone(phone: string): string {
     return '0' + digits.slice(3);
   }
   return digits.slice(0, 11);
+}
+
+/**
+ * Normalizes a Nigerian number into E.164 for Supabase Phone Auth.
+ */
+export function normalizeNigerianPhoneE164(phone: string): string {
+  const normalized = normalizeNigerianPhone(phone);
+  return normalized.length === 11 && normalized.startsWith('0')
+    ? '+234' + normalized.slice(1)
+    : phone.trim();
+}
+
+/**
+ * Validates the SUBPLUG username.
+ */
+export function normalizeUsername(username: string): string {
+  return username.trim().toLowerCase();
+}
+
+export function isValidUsername(username: string): boolean {
+  return /^[a-z0-9_]{4,20}$/.test(normalizeUsername(username));
+}
+
+export function isReservedUsername(username: string): boolean {
+  const reserved = new Set([
+    'admin', 'administrator', 'support', 'system', 'security',
+    'api', 'billing', 'wallet', 'finance', 'subplug', 'root',
+    'moderator', 'moderation', 'help', 'official',
+  ]);
+  return reserved.has(normalizeUsername(username));
 }
 
 /**
