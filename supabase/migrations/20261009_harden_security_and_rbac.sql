@@ -522,7 +522,7 @@ as $$
       and role in ('admin', 'super_admin')
       and is_active = true
   );
-2131;
+$$;
 
 -- Stable helper to check if caller is a super_admin
 create or replace function public.is_super_admin()
@@ -538,7 +538,7 @@ as $$
       and role = 'super_admin'
       and is_active = true
   );
-2131;
+$$;
 
 -- Permission verification helper (requires active administrative account)
 create or replace function public.has_admin_permission(
@@ -565,7 +565,7 @@ as $$
         )
       )
   );
-2131;
+$$;
 
 revoke all on function public.has_admin_permission(uuid, text) from public, anon, authenticated;
 grant execute on function public.has_admin_permission(uuid, text) to service_role;
