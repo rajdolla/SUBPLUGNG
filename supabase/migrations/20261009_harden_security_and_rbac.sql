@@ -777,9 +777,10 @@ begin
   -- 8. PIN STATUS GUARD (DIRECT MANIPULATION BLOCKED)
   if (new.transaction_pin_hash is distinct from old.transaction_pin_hash) or
      (new.transaction_pin_set is distinct from old.transaction_pin_set) then
-    if current_setting('subplug.internal_pin_token', true) <> 'authorized_internal_pin_change' then
-      raise exception 'Security Violation: Direct modification of transaction PIN columns is prohibited. Use official PIN procedures.';
-    end if;
+   if current_setting('subplug.internal_pin_token', true)
+   is distinct from 'authorized_internal_pin_change' then
+  raise exception 'Security Violation: Direct modification of transaction PIN columns is prohibited. Use official PIN procedures.';
+end if;
   end if;
 
   return new;
@@ -839,7 +840,11 @@ begin
       raise exception 'Current transaction PIN is required to change PIN.';
     end if;
 
-    v_pepper := coalesce(current_setting('app.settings.pin_pepper', true), 'subplug_sec_salt_v1');
+  v_pepper := current_setting('app.settings.pin_pepper', true);
+
+if v_pepper is null or length(trim(v_pepper)) < 32 then
+  raise exception 'Transaction PIN cryptographic configuration is missing or invalid.';
+end if;
    
 if crypt(p_current_pin || v_pepper, v_profile.transaction_pin_hash) <> v_profile.transaction_pin_hash then
   update public.profiles
@@ -869,7 +874,11 @@ if crypt(p_current_pin || v_pepper, v_profile.transaction_pin_hash) <> v_profile
    end if;
   end if;
 
-  v_pepper := coalesce(current_setting('app.settings.pin_pepper', true), 'subplug_sec_salt_v1');
+ v_pepper := current_setting('app.settings.pin_pepper', true);
+
+if v_pepper is null or length(trim(v_pepper)) < 32 then
+  raise exception 'Transaction PIN cryptographic configuration is missing or invalid.';
+end if;
   v_hashed := crypt(p_new_pin || v_pepper, gen_salt('bf', 10));
 
   perform set_config('subplug.internal_pin_token', 'authorized_internal_pin_change', true);
@@ -927,7 +936,11 @@ begin
     raise exception 'PIN entry locked until % due to multiple failed attempts.', v_profile.pin_locked_until;
   end if;
 
-  v_pepper := coalesce(current_setting('app.settings.pin_pepper', true), 'subplug_sec_salt_v1');
+  v_pepper := current_setting('app.settings.pin_pepper', true);
+
+if v_pepper is null or length(trim(v_pepper)) < 32 then
+  raise exception 'Transaction PIN cryptographic configuration is missing or invalid.';
+end if;
   v_matches := (crypt(p_pin || v_pepper, v_profile.transaction_pin_hash) = v_profile.transaction_pin_hash);
 
   if v_matches then
