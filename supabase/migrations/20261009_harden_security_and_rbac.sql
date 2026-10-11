@@ -840,19 +840,33 @@ begin
     end if;
 
     v_pepper := coalesce(current_setting('app.settings.pin_pepper', true), 'subplug_sec_salt_v1');
-    if crypt(p_current_pin || v_pepper, v_profile.transaction_pin_hash) <> v_profile.transaction_pin_hash then
-      update public.profiles
-      set pin_failed_attempts = v_profile.pin_failed_attempts + 1,
-          pin_locked_until = case when v_profile.pin_failed_attempts + 1 >= 5 then now() + interval '30 minutes' else null end,
-          updated_at = now()
-      where id = v_caller;
+   
+if crypt(p_current_pin || v_pepper, v_profile.transaction_pin_hash) <> v_profile.transaction_pin_hash then
+  update public.profiles
+  set pin_failed_attempts = v_profile.pin_failed_attempts + 1,
+      pin_locked_until = case
+        when v_profile.pin_failed_attempts + 1 >= 5
+          then now() + interval '30 minutes'
+        else null
+      end,
+      updated_at = now()
+  where id = v_caller;
 
-      if v_profile.pin_failed_attempts + 1 >= 5 then
-        raise exception 'Invalid current PIN. Account locked for 30 minutes due to 5 failed attempts.';
-      else
-        raise exception 'Invalid current PIN. % attempt(s) remaining before account lockout.', (5 - (v_profile.pin_failed_attempts + 1));
-      end if;
+  if v_profile.pin_failed_attempts + 1 >= 5 then
+    return jsonb_build_object(
+      'success', false,
+      'message', 'Invalid current PIN. Account locked for 30 minutes due to 5 failed attempts.'
+    );
+  else
+    return jsonb_build_object(
+      'success', false,
+      'message', format(
+        'Invalid current PIN. %s attempt(s) remaining before account lockout.',
+        5 - (v_profile.pin_failed_attempts + 1)
+      )
+    );
     end if;
+   end if;
   end if;
 
   v_pepper := coalesce(current_setting('app.settings.pin_pepper', true), 'subplug_sec_salt_v1');
